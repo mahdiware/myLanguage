@@ -1,0 +1,13 @@
+number = 0;
+
+do {
+    if (number % 2 == 0 || number % 4 == 0) {
+        print "2️⃣> " number;
+    } elif (number % 5 == 0) {
+        print "1️⃣> " number;
+    } else {
+        print "🔘> " number;
+    }
+    
+    number = number + 1;
+} while (number <= 10);
