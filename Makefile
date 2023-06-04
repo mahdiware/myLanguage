@@ -17,9 +17,10 @@ $(NAME): $(OBJS)
 
 .PHONY: clean
 
-clean:
+c:
 	rm -rf $(OBJDIR)
 	rm -f $(NAME)
-run:
+r:
+	@make
 	@cp -r $(NAME) /usr/local/bin/
 	@chmod +x /usr/local/bin/$(NAME)
