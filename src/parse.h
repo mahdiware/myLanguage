@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+//if development is 1 then it is defined and displayed to the lexer and interpreter when running the code.
 #ifndef development
 	#define development 0
 #endif
