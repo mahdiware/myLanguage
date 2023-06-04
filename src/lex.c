@@ -18,92 +18,28 @@ enum {
 #define IS_WSPACE(c) ((c) == ' ' || (c) == '\t' || (c) == '\r' || (c) == '\n')
 
 
-int countLetters(const char *str) {
-    int count = 0;
-    // Iterate over each character in the string
-    for (int i = 0; str[i] != '\0'; i++) {
-        count++;
-    }
-    return count;
-}
-
-#define TOKEN_DEFINE(token, str, count) \
+#define TOKEN_DEFINE(token, str) \
 static uint8_t token(const uint8_t c, uint8_t *const s) \
 { \
+	int count = 0; \
+	for (int i = 0; str[i] != '\0'; i++) { \
+        count++; \
+    } \
 	uint8_t i = 0; \
 	for(i = 0; i <= (count-2); ++i){ \
-		return c == (str)[i] ? TR(i+1, HUNGRY) : REJECT; \
+		if(i == *s){ \
+			return c == (str)[i] ? TR(i+1, HUNGRY) : REJECT; \
+		} \
 	} \
-	if(count-1 == i){ \
+	if(count-1 == *s){ \
 		return c == (str)[i] ? TR(i+1, ACCEPT) : REJECT; \
 	} \
 	i++; \
-	if(count == i){ \
-		return c == (str)[i] ? TR(i+1, ACCEPT) : REJECT; \
+	if(count == *s){ \
+		return REJECT; \
 	} \
 	abort(); \
 } \
-
-
-#define TOKEN_DEFINE_1(token, str) \
-static uint8_t token(const uint8_t c, uint8_t *const s) \
-{ \
-    switch (*s) { \
-    case 0: return c == (str)[0] ? TR(1, ACCEPT) : REJECT; \
-    case 1: return REJECT; \
-    default: abort(); \
-    } \
-}
-
-#define TOKEN_DEFINE_2(token, str) \
-static uint8_t token(const uint8_t c, uint8_t *const s) \
-{ \
-    switch (*s) { \
-    case 0: return c == (str)[0] ? TR(1, HUNGRY) : REJECT; \
-    case 1: return c == (str)[1] ? TR(2, ACCEPT) : REJECT; \
-    case 2: return REJECT; \
-    default: abort(); \
-    } \
-}
-
-#define TOKEN_DEFINE_3(token, str) \
-static uint8_t token(const uint8_t c, uint8_t *const s) \
-{ \
-    switch (*s) { \
-    case 0: return c == (str)[0] ? TR(1, HUNGRY) : REJECT; \
-    case 1: return c == (str)[1] ? TR(2, HUNGRY) : REJECT; \
-    case 2: return c == (str)[2] ? TR(3, ACCEPT) : REJECT; \
-    case 3: return REJECT; \
-    default: abort(); \
-    } \
-}
-
-#define TOKEN_DEFINE_4(token, str) \
-static uint8_t token(const uint8_t c, uint8_t *const s) \
-{ \
-    switch (*s) { \
-    case 0: return c == (str)[0] ? TR(1, HUNGRY) : REJECT; \
-    case 1: return c == (str)[1] ? TR(2, HUNGRY) : REJECT; \
-    case 2: return c == (str)[2] ? TR(3, HUNGRY) : REJECT; \
-    case 3: return c == (str)[3] ? TR(4, ACCEPT) : REJECT; \
-    case 4: return REJECT; \
-    default: abort(); \
-    } \
-}
-
-#define TOKEN_DEFINE_5(token, str) \
-static uint8_t token(const uint8_t c, uint8_t *const s) \
-{ \
-    switch (*s) { \
-    case 0: return c == (str)[0] ? TR(1, HUNGRY) : REJECT; \
-    case 1: return c == (str)[1] ? TR(2, HUNGRY) : REJECT; \
-    case 2: return c == (str)[2] ? TR(3, HUNGRY) : REJECT; \
-    case 3: return c == (str)[3] ? TR(4, HUNGRY) : REJECT; \
-    case 4: return c == (str)[4] ? TR(5, ACCEPT) : REJECT; \
-    case 5: return REJECT; \
-    default: abort(); \
-    } \
-}
 
 static uint8_t tk_name(const uint8_t c, uint8_t *const s)
 {
@@ -225,38 +161,38 @@ static uint8_t tk_bcom(const uint8_t c, uint8_t *const s)
     abort();
 }
 
-TOKEN_DEFINE_1(tk_lpar, "(")
-TOKEN_DEFINE_1(tk_rpar, ")")
-TOKEN_DEFINE_1(tk_lbra, "[")
-TOKEN_DEFINE_1(tk_rbra, "]")
-TOKEN_DEFINE_1(tk_lbrc, "{")
-TOKEN_DEFINE_1(tk_rbrc, "}")
-TOKEN_DEFINE_2(tk_cond, "if")
-TOKEN_DEFINE_4(tk_elif, "elif")
-TOKEN_DEFINE_4(tk_else, "else")
-TOKEN_DEFINE_2(tk_dowh, "do")
-TOKEN_DEFINE_5(tk_whil, "while")
-TOKEN_DEFINE_1(tk_assn, "=")
-TOKEN_DEFINE_2(tk_equl, "==")
-TOKEN_DEFINE_2(tk_neql, "!=")
-TOKEN_DEFINE_1(tk_lthn, "<")
-TOKEN_DEFINE_1(tk_gthn, ">")
-TOKEN_DEFINE_2(tk_lteq, "<=")
-TOKEN_DEFINE_2(tk_gteq, ">=")
-TOKEN_DEFINE_2(tk_conj, "&&")
-TOKEN_DEFINE_2(tk_disj, "||")
-TOKEN_DEFINE_1(tk_plus, "+")
-TOKEN_DEFINE_1(tk_mins, "-")
-TOKEN_DEFINE_1(tk_mult, "*")
-TOKEN_DEFINE_1(tk_divi, "/")
-TOKEN_DEFINE_1(tk_modu, "%")
-TOKEN_DEFINE_1(tk_nega, "!")
-TOKEN_DEFINE_5(tk_prnt, "print")
-TOKEN_DEFINE_5(tk_inpt, "input")
-TOKEN_DEFINE_1(tk_scol, ";")
-TOKEN_DEFINE_1(tk_ques, "?")
-TOKEN_DEFINE_1(tk_coln, ":")
-//TOKEN_DEFINE_1(tk_coma, ",")
+TOKEN_DEFINE(tk_lpar, "(")
+TOKEN_DEFINE(tk_rpar, ")")
+TOKEN_DEFINE(tk_lbra, "[")
+TOKEN_DEFINE(tk_rbra, "]")
+TOKEN_DEFINE(tk_lbrc, "{")
+TOKEN_DEFINE(tk_rbrc, "}")
+TOKEN_DEFINE(tk_cond, "if")
+TOKEN_DEFINE(tk_elif, "elif")
+TOKEN_DEFINE(tk_else, "else")
+TOKEN_DEFINE(tk_dowh, "do")
+TOKEN_DEFINE(tk_whil, "while")
+TOKEN_DEFINE(tk_assn, "=")
+TOKEN_DEFINE(tk_equl, "==")
+TOKEN_DEFINE(tk_neql, "!=")
+TOKEN_DEFINE(tk_lthn, "<")
+TOKEN_DEFINE(tk_gthn, ">")
+TOKEN_DEFINE(tk_lteq, "<=")
+TOKEN_DEFINE(tk_gteq, ">=")
+TOKEN_DEFINE(tk_conj, "&&")
+TOKEN_DEFINE(tk_disj, "||")
+TOKEN_DEFINE(tk_plus, "+")
+TOKEN_DEFINE(tk_mins, "-")
+TOKEN_DEFINE(tk_mult, "*")
+TOKEN_DEFINE(tk_divi, "/")
+TOKEN_DEFINE(tk_modu, "%")
+TOKEN_DEFINE(tk_nega, "!")
+TOKEN_DEFINE(tk_prnt, "print")
+TOKEN_DEFINE(tk_inpt, "input")
+TOKEN_DEFINE(tk_scol, ";")
+TOKEN_DEFINE(tk_ques, "?")
+TOKEN_DEFINE(tk_coln, ":")
+//TOKEN_DEFINE(tk_coma, ",")
 
 static uint8_t (*const token_funcs[TK_COUNT])(const uint8_t, uint8_t *const) = {
     tk_name,    // Function to recognize names/identifiers
