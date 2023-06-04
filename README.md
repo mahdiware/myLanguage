@@ -59,7 +59,7 @@ The interpreter then starts execution from the root of the tree (which is always
 
 
 for example these code: 
-```c
+```
 number = 0;
 
 do {
@@ -75,7 +75,8 @@ do {
 } while (number <= 10);
 ```
 
-```
+and excused the code
+```bash
 $ make
 $ ./lang examples/do-while.txt
 2️⃣> 0
