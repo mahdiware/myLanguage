@@ -1,0 +1,7 @@
+gh = (23 == 23 ? 20 : 10);
+
+if (!(10 == 20)){
+	print "Hello World!" gh;
+}else{
+	print "nothing";
+}

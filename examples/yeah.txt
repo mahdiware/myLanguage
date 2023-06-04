@@ -1,0 +1,7 @@
+/*var = 0;
+input var;
+
+print "valua is " var;
+*/
+
+print "yeah" 12 + 90 == 90 ? 10 : 1;

@@ -1,1 +1,3 @@
 print "This year is : " 2023;
+
+print 230+10;

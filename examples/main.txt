@@ -1,0 +1,10 @@
+number = 20;
+
+if (number == 20) {
+	print "number is equal 20";
+}
+
+salary = 10;
+
+print "salary is $" + salary;
+print "This program is working";

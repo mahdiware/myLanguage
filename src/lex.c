@@ -9,8 +9,6 @@ enum {
     STS_HUNGRY,
 };
 
-typedef uint8_t sts_t;
-
 #define TR(st, tr) (*s = (st), (STS_##tr))
 #define REJECT TR(0, REJECT)
 
@@ -20,7 +18,7 @@ typedef uint8_t sts_t;
 #define IS_WSPACE(c) ((c) == ' ' || (c) == '\t' || (c) == '\r' || (c) == '\n')
 
 #define TOKEN_DEFINE_1(token, str) \
-static sts_t token(const uint8_t c, uint8_t *const s) \
+static uint8_t token(const uint8_t c, uint8_t *const s) \
 { \
     switch (*s) { \
     case 0: return c == (str)[0] ? TR(1, ACCEPT) : REJECT; \
@@ -30,7 +28,7 @@ static sts_t token(const uint8_t c, uint8_t *const s) \
 }
 
 #define TOKEN_DEFINE_2(token, str) \
-static sts_t token(const uint8_t c, uint8_t *const s) \
+static uint8_t token(const uint8_t c, uint8_t *const s) \
 { \
     switch (*s) { \
     case 0: return c == (str)[0] ? TR(1, HUNGRY) : REJECT; \
@@ -41,7 +39,7 @@ static sts_t token(const uint8_t c, uint8_t *const s) \
 }
 
 #define TOKEN_DEFINE_3(token, str) \
-static sts_t token(const uint8_t c, uint8_t *const s) \
+static uint8_t token(const uint8_t c, uint8_t *const s) \
 { \
     switch (*s) { \
     case 0: return c == (str)[0] ? TR(1, HUNGRY) : REJECT; \
@@ -53,7 +51,7 @@ static sts_t token(const uint8_t c, uint8_t *const s) \
 }
 
 #define TOKEN_DEFINE_4(token, str) \
-static sts_t token(const uint8_t c, uint8_t *const s) \
+static uint8_t token(const uint8_t c, uint8_t *const s) \
 { \
     switch (*s) { \
     case 0: return c == (str)[0] ? TR(1, HUNGRY) : REJECT; \
@@ -66,7 +64,7 @@ static sts_t token(const uint8_t c, uint8_t *const s) \
 }
 
 #define TOKEN_DEFINE_5(token, str) \
-static sts_t token(const uint8_t c, uint8_t *const s) \
+static uint8_t token(const uint8_t c, uint8_t *const s) \
 { \
     switch (*s) { \
     case 0: return c == (str)[0] ? TR(1, HUNGRY) : REJECT; \
@@ -79,7 +77,7 @@ static sts_t token(const uint8_t c, uint8_t *const s) \
     } \
 }
 
-static sts_t tk_name(const uint8_t c, uint8_t *const s)
+static uint8_t tk_name(const uint8_t c, uint8_t *const s)
 {
     enum {
         tk_name_begin,
@@ -97,13 +95,13 @@ static sts_t tk_name(const uint8_t c, uint8_t *const s)
     abort();
 }
 
-static sts_t tk_nmbr(const uint8_t c, uint8_t *const s)
+static uint8_t tk_nmbr(const uint8_t c, uint8_t *const s)
 {
     (void) s;
     return IS_DIGIT(c) ? STS_ACCEPT : STS_REJECT;
 }
 
-static sts_t tk_strl(const uint8_t c, uint8_t *const s)
+static uint8_t tk_strl(const uint8_t c, uint8_t *const s)
 {
     enum {
         tk_strl_begin,
@@ -125,7 +123,7 @@ static sts_t tk_strl(const uint8_t c, uint8_t *const s)
     abort();
 }
 
-static sts_t tk_wspc(const uint8_t c, uint8_t *const s)
+static uint8_t tk_wspc(const uint8_t c, uint8_t *const s)
 {
     enum {
         tk_wspc_begin,
@@ -143,7 +141,7 @@ static sts_t tk_wspc(const uint8_t c, uint8_t *const s)
     abort();
 }
 
-static sts_t tk_lcom(const uint8_t c, uint8_t *const s)
+static uint8_t tk_lcom(const uint8_t c, uint8_t *const s)
 {
     enum {
         tk_lcom_begin,
@@ -169,7 +167,7 @@ static sts_t tk_lcom(const uint8_t c, uint8_t *const s)
     abort();
 }
 
-static sts_t tk_bcom(const uint8_t c, uint8_t *const s)
+static uint8_t tk_bcom(const uint8_t c, uint8_t *const s)
 {
     enum {
         tk_bcom_begin,
@@ -226,11 +224,12 @@ TOKEN_DEFINE_1(tk_divi, "/")
 TOKEN_DEFINE_1(tk_modu, "%")
 TOKEN_DEFINE_1(tk_nega, "!")
 TOKEN_DEFINE_5(tk_prnt, "print")
+TOKEN_DEFINE_5(tk_inpt, "input")
 TOKEN_DEFINE_1(tk_scol, ";")
 TOKEN_DEFINE_1(tk_ques, "?")
 TOKEN_DEFINE_1(tk_coln, ":")
 
-static sts_t (*const token_funcs[TK_COUNT])(const uint8_t, uint8_t *const) = {
+static uint8_t (*const token_funcs[TK_COUNT])(const uint8_t, uint8_t *const) = {
     tk_name,
     tk_nmbr,
     tk_strl,
@@ -264,6 +263,7 @@ static sts_t (*const token_funcs[TK_COUNT])(const uint8_t, uint8_t *const) = {
     tk_modu,
     tk_nega,
     tk_prnt,
+    tk_inpt,
     tk_scol,
     tk_ques,
     tk_coln,
@@ -299,7 +299,7 @@ int lex(const uint8_t *const input, const size_t size,
     struct token **const tokens, size_t *const ntokens)
 {
     static struct {
-        sts_t prev, curr;
+        uint8_t prev, curr;
     } statuses[TK_COUNT] = {
         [0 ... TK_COUNT - 1] = { STS_HUNGRY, STS_REJECT }
     };
