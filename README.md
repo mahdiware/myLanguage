@@ -1,4 +1,4 @@
-<p align="center"> <img src="https://raw.githubusercontent.com/mahdiware/myLanguage/master/img/icon.png" alt="Máni" title="Máni" align="center"> </p>
+<p align="center"> <img src="https://raw.githubusercontent.com/mahdiware/myLanguage/master/img/icon.png" alt="Interpreter-Language" title=Logo" align="center"> </p>
 
 ## About
 
