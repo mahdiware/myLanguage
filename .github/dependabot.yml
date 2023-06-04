@@ -1,6 +1,14 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
+
+  - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
+      # Check for updates to GitHub Actions every weekday
+      interval: "daily"
+
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      # Check for updates managed by Composer once a weekday
       interval: "daily"
