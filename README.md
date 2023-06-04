@@ -28,6 +28,7 @@ The interpreter is straightforward. It begins at the top of the parse tree and t
   * `Name[Expr] = Expr;`
 
 * Printing to standard output (integers only):
+  * `print "Placeholder: ";`
   * `print "Placeholder: " Expr;`
   * `print Expr;`
 
