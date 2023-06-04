@@ -7,7 +7,7 @@
 #include <stddef.h>
 
 #ifndef development
-	#define development 1
+	#define development 0
 #endif
 
 enum {
