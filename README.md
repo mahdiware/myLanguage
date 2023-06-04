@@ -57,9 +57,9 @@ If the lexing process succeeds (all tokens are recognized), the parser starts. D
 
 The interpreter then starts execution from the root of the tree (which is always "Unit"), executing the tree produced by the parser.
 
-```
-$ make
-$ ./lang examples/do-while.txt
+
+for example these code: 
+```c
 number = 0;
 
 do {
@@ -73,151 +73,11 @@ do {
 
     number = number + 1;
 } while (number <= 10);
+```
 
-*** Parsing ***
-Shift: ^
-Shift: ^ number
-Shift: ^ number =
-Shift: ^ number = 0
-Red19: ^ number = Atom
-Red20: ^ number = Expr
-Shift: ^ number = Expr ;
-Red05: ^ Assn
-Red02: ^ Stmt
-Shift: ^ Stmt do
-Shift: ^ Stmt do {
-Shift: ^ Stmt do { if
-Shift: ^ Stmt do { if (
-Shift: ^ Stmt do { if ( number
-Red18: ^ Stmt do { if ( Atom
-Red20: ^ Stmt do { if ( Expr
-Shift: ^ Stmt do { if ( Expr %
-Shift: ^ Stmt do { if ( Expr % 2
-Red19: ^ Stmt do { if ( Expr % Atom
-Red20: ^ Stmt do { if ( Expr % Expr
-Red39: ^ Stmt do { if ( Bexp
-Red22: ^ Stmt do { if ( Expr
-Shift: ^ Stmt do { if ( Expr ==
-Shift: ^ Stmt do { if ( Expr == 0
-Red19: ^ Stmt do { if ( Expr == Atom
-Red20: ^ Stmt do { if ( Expr == Expr
-Red27: ^ Stmt do { if ( Bexp
-Red22: ^ Stmt do { if ( Expr
-Shift: ^ Stmt do { if ( Expr ||
-Shift: ^ Stmt do { if ( Expr || number
-Red18: ^ Stmt do { if ( Expr || Atom
-Red20: ^ Stmt do { if ( Expr || Expr
-Shift: ^ Stmt do { if ( Expr || Expr %
-Shift: ^ Stmt do { if ( Expr || Expr % 4
-Red19: ^ Stmt do { if ( Expr || Expr % Atom
-Red20: ^ Stmt do { if ( Expr || Expr % Expr
-Red39: ^ Stmt do { if ( Expr || Bexp
-Red22: ^ Stmt do { if ( Expr || Expr
-Shift: ^ Stmt do { if ( Expr || Expr ==
-Shift: ^ Stmt do { if ( Expr || Expr == 0
-Red19: ^ Stmt do { if ( Expr || Expr == Atom
-Red20: ^ Stmt do { if ( Expr || Expr == Expr
-Red27: ^ Stmt do { if ( Expr || Bexp
-Red22: ^ Stmt do { if ( Expr || Expr
-Red34: ^ Stmt do { if ( Bexp
-Red22: ^ Stmt do { if ( Expr
-Shift: ^ Stmt do { if ( Expr )
-Red26: ^ Stmt do { if Pexp
-Red21: ^ Stmt do { if Expr
-Shift: ^ Stmt do { if Expr {
-Shift: ^ Stmt do { if Expr { print
-Shift: ^ Stmt do { if Expr { print "2️⃣> "
-Shift: ^ Stmt do { if Expr { print "2️⃣> " number
-Red18: ^ Stmt do { if Expr { print "2️⃣> " Atom
-Red20: ^ Stmt do { if Expr { print "2️⃣> " Expr
-Shift: ^ Stmt do { if Expr { print "2️⃣> " Expr ;
-Red08: ^ Stmt do { if Expr { Prnt
-Red03: ^ Stmt do { if Expr { Stmt
-Shift: ^ Stmt do { if Expr { Stmt }
-Red13: ^ Stmt do { Cond
-Shift: ^ Stmt do { Cond elif
-Shift: ^ Stmt do { Cond elif (
-Shift: ^ Stmt do { Cond elif ( number
-Red18: ^ Stmt do { Cond elif ( Atom
-Red20: ^ Stmt do { Cond elif ( Expr
-Shift: ^ Stmt do { Cond elif ( Expr %
-Shift: ^ Stmt do { Cond elif ( Expr % 5
-Red19: ^ Stmt do { Cond elif ( Expr % Atom
-Red20: ^ Stmt do { Cond elif ( Expr % Expr
-Red39: ^ Stmt do { Cond elif ( Bexp
-Red22: ^ Stmt do { Cond elif ( Expr
-Shift: ^ Stmt do { Cond elif ( Expr ==
-Shift: ^ Stmt do { Cond elif ( Expr == 0
-Red19: ^ Stmt do { Cond elif ( Expr == Atom
-Red20: ^ Stmt do { Cond elif ( Expr == Expr
-Red27: ^ Stmt do { Cond elif ( Bexp
-Red22: ^ Stmt do { Cond elif ( Expr
-Shift: ^ Stmt do { Cond elif ( Expr )
-Red26: ^ Stmt do { Cond elif Pexp
-Red21: ^ Stmt do { Cond elif Expr
-Shift: ^ Stmt do { Cond elif Expr {
-Shift: ^ Stmt do { Cond elif Expr { print
-Shift: ^ Stmt do { Cond elif Expr { print "1️⃣> "
-Shift: ^ Stmt do { Cond elif Expr { print "1️⃣> " number
-Red18: ^ Stmt do { Cond elif Expr { print "1️⃣> " Atom
-Red20: ^ Stmt do { Cond elif Expr { print "1️⃣> " Expr
-Shift: ^ Stmt do { Cond elif Expr { print "1️⃣> " Expr ;
-Red08: ^ Stmt do { Cond elif Expr { Prnt
-Red03: ^ Stmt do { Cond elif Expr { Stmt
-Shift: ^ Stmt do { Cond elif Expr { Stmt }
-Red14: ^ Stmt do { Cond Elif
-Shift: ^ Stmt do { Cond Elif else
-Shift: ^ Stmt do { Cond Elif else {
-Shift: ^ Stmt do { Cond Elif else { print
-Shift: ^ Stmt do { Cond Elif else { print "🔘> "
-Shift: ^ Stmt do { Cond Elif else { print "🔘> " number
-Red18: ^ Stmt do { Cond Elif else { print "🔘> " Atom
-Red20: ^ Stmt do { Cond Elif else { print "🔘> " Expr
-Shift: ^ Stmt do { Cond Elif else { print "🔘> " Expr ;
-Red08: ^ Stmt do { Cond Elif else { Prnt
-Red03: ^ Stmt do { Cond Elif else { Stmt
-Shift: ^ Stmt do { Cond Elif else { Stmt }
-Red15: ^ Stmt do { Cond Elif Else
-Red10: ^ Stmt do { Ctrl
-Red04: ^ Stmt do { Stmt
-Shift: ^ Stmt do { Stmt number
-Shift: ^ Stmt do { Stmt number =
-Shift: ^ Stmt do { Stmt number = number
-Red18: ^ Stmt do { Stmt number = Atom
-Red20: ^ Stmt do { Stmt number = Expr
-Shift: ^ Stmt do { Stmt number = Expr +
-Shift: ^ Stmt do { Stmt number = Expr + 1
-Red19: ^ Stmt do { Stmt number = Expr + Atom
-Red20: ^ Stmt do { Stmt number = Expr + Expr
-Red35: ^ Stmt do { Stmt number = Bexp
-Red22: ^ Stmt do { Stmt number = Expr
-Shift: ^ Stmt do { Stmt number = Expr ;
-Red05: ^ Stmt do { Stmt Assn
-Red02: ^ Stmt do { Stmt Stmt
-Shift: ^ Stmt do { Stmt Stmt }
-Shift: ^ Stmt do { Stmt Stmt } while
-Shift: ^ Stmt do { Stmt Stmt } while (
-Shift: ^ Stmt do { Stmt Stmt } while ( number
-Red18: ^ Stmt do { Stmt Stmt } while ( Atom
-Red20: ^ Stmt do { Stmt Stmt } while ( Expr
-Shift: ^ Stmt do { Stmt Stmt } while ( Expr <=
-Shift: ^ Stmt do { Stmt Stmt } while ( Expr <= 10
-Red19: ^ Stmt do { Stmt Stmt } while ( Expr <= Atom
-Red20: ^ Stmt do { Stmt Stmt } while ( Expr <= Expr
-Red31: ^ Stmt do { Stmt Stmt } while ( Bexp
-Red22: ^ Stmt do { Stmt Stmt } while ( Expr
-Shift: ^ Stmt do { Stmt Stmt } while ( Expr )
-Red26: ^ Stmt do { Stmt Stmt } while Pexp
-Red21: ^ Stmt do { Stmt Stmt } while Expr
-Shift: ^ Stmt do { Stmt Stmt } while Expr ;
-Red16: ^ Stmt Dowh
-Red11: ^ Stmt Ctrl
-Red04: ^ Stmt Stmt
-Shift: ^ Stmt Stmt $
-Red01: Unit
-ACCEPT Unit
-
-*** Running ***
+```
+$ make
+$ ./lang examples/do-while.txt
 2️⃣> 0
 🔘> 1
 2️⃣> 2
