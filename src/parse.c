@@ -9,36 +9,47 @@
 #define GRAMMAR_SIZE (sizeof(grammar) / sizeof(*grammar))
 #define SKIP_TOKEN(t) ((t) == TK_WSPC || (t) == TK_LCOM || (t) == TK_BCOM)
 
-#define n(_nt) { .nt = NT_##_nt, .is_tk = 0, .is_mt = 0 }
-#define m(_nt) { .nt = NT_##_nt, .is_tk = 0, .is_mt = 1 }
-#define t(_tm) { .tk = TK_##_tm, .is_tk = 1, .is_mt = 0 }
-#define no     { .tk = TK_COUNT, .is_tk = 1, .is_mt = 0 }
+#define n(_nt) { .nt = NT_##_nt, .is_tk = 0, .is_mt = 0 } // Non-terminal symbol
+#define m(_nt) { .nt = NT_##_nt, .is_tk = 0, .is_mt = 1 } // Empty production (epsilon)
+#define t(_tm) { .tk = TK_##_tm, .is_tk = 1, .is_mt = 0 } // Terminal symbol
+#define no     { .tk = TK_COUNT, .is_tk = 1, .is_mt = 0 } // Placeholder (no symbol)
+
+// The macros above are used to define symbols in a parsing table. They generate initializer expressions for a structure.
+// The structure contains information about a symbol, such as whether it is a non-terminal or terminal symbol, and whether it represents an empty production (epsilon).
+
+// Example usage:
+// n(Stmt) will expand to { .nt = NT_Stmt, .is_tk = 0, .is_mt = 0 } which represents a non-terminal symbol
+// m(Stmt) will expand to { .nt = NT_Stmt, .is_tk = 0, .is_mt = 1 } which represents an empty production
+// t(NAME) will expand to { .tk = TK_NAME, .is_tk = 1, .is_mt = 0 } which represents a terminal symbol
+// no will expand to { .tk = TK_COUNT, .is_tk = 1, .is_mt = 0 } which represents a placeholder symbol
+
+
 
 #define r1(_lhs, t1) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, no, no, t1, } },
+    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, no, no, t1, } }, // Production rule with 1 terminal symbol
 #define r2(_lhs, t1, t2) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, no, t1, t2, } },
+    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, no, t1, t2, } }, // Production rule with 2 terminal symbols
 #define r3(_lhs, t1, t2, t3) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, t1, t2, t3, } },
+    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, t1, t2, t3, } }, // Production rule with 3 terminal symbols
 #define r4(_lhs, t1, t2, t3, t4) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, t1, t2, t3, t4, } },
+    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, t1, t2, t3, t4, } }, // Production rule with 4 terminal symbols
 #define r5(_lhs, t1, t2, t3, t4, t5) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, t1, t2, t3, t4, t5, } },
+    { .lhs = NT_##_lhs, .rhs = { no, no, no, t1, t2, t3, t4, t5, } }, // Production rule with 5 terminal symbols
 #define r6(_lhs, t1, t2, t3, t4, t5, t6) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, t1, t2, t3, t4, t5, t6, } },
+    { .lhs = NT_##_lhs, .rhs = { no, no, t1, t2, t3, t4, t5, t6, } }, // Production rule with 6 terminal symbols
 #define r7(_lhs, t1, t2, t3, t4, t5, t6, t7) \
-    { .lhs = NT_##_lhs, .rhs = { no, t1, t2, t3, t4, t5, t6, t7, } },
+    { .lhs = NT_##_lhs, .rhs = { no, t1, t2, t3, t4, t5, t6, t7, } }, // Production rule with 7 terminal symbols
 
 static const struct rule {
     /* left-hand side of production */
-    const nt_t lhs;
+    const uint8_t lhs;
 
     /* array of RULE_RHS_LAST + 1 terms which form the right-hand side */
     const struct term {
         /* a rule RHS term is either a terminal token or a non-terminal */
         union {
-            const tk_t tk;
-            const nt_t nt;
+            const uint8_t tk;
+            const uint8_t nt;
         };
 
         /* indicates which field of the above union to use */
@@ -48,63 +59,66 @@ static const struct rule {
         const uint8_t is_mt: 1;
     } rhs[RULE_RHS_LAST + 1];
 } grammar[] = {
-    r3(Unit, t(FBEG), m(Stmt), t(FEND)                                         )
+    r3(Unit, t(FBEG), m(Stmt), t(FEND))
 
-    r1(Stmt, n(Assn)                                                           )
-    r1(Stmt, n(Prnt)                                                           )
-    r1(Stmt, n(Ctrl)                                                           )
+    r1(Stmt, n(Assn))
+    r1(Stmt, n(Prnt))
+/**/r1(Stmt, n(Inpt))
+    r1(Stmt, n(Ctrl))
+	
+    r4(Assn, t(NAME), t(ASSN), n(Expr), t(SCOL))
+    r4(Assn, n(Aexp), t(ASSN), n(Expr), t(SCOL))
 
-    r4(Assn, t(NAME), t(ASSN), n(Expr), t(SCOL)                                )
-    r4(Assn, n(Aexp), t(ASSN), n(Expr), t(SCOL)                                )
+	r3(Prnt, t(PRNT), t(STRL), t(SCOL))
+    r3(Prnt, t(PRNT), n(Expr), t(SCOL))
+    r4(Prnt, t(PRNT), t(STRL), n(Expr), t(SCOL))
+/**/r3(Inpt, t(INPT), n(Expr), t(SCOL))	
+	
+    r2(Ctrl, n(Cond), m(Elif))
+    r3(Ctrl, n(Cond), m(Elif), n(Else))
+    r1(Ctrl, n(Dowh))
+    r1(Ctrl, n(Whil))
 
-    r3(Prnt, t(PRNT), n(Expr), t(SCOL)                                         )
-    r4(Prnt, t(PRNT), t(STRL), n(Expr), t(SCOL)                                )
+    r5(Cond, t(COND), n(Expr), t(LBRC), m(Stmt), t(RBRC))
+    r5(Elif, t(ELIF), n(Expr), t(LBRC), m(Stmt), t(RBRC))
+    r4(Else, t(ELSE), t(LBRC), m(Stmt), t(RBRC))
 
-    r2(Ctrl, n(Cond), m(Elif)                                                  )
-    r3(Ctrl, n(Cond), m(Elif), n(Else)                                         )
-    r1(Ctrl, n(Dowh)                                                           )
-    r1(Ctrl, n(Whil)                                                           )
+    r7(Dowh, t(DOWH), t(LBRC), m(Stmt), t(RBRC), t(WHIL), n(Expr), t(SCOL))
+    r5(Whil, t(WHIL), n(Expr), t(LBRC), m(Stmt), t(RBRC))
 
-    r5(Cond, t(COND), n(Expr), t(LBRC), m(Stmt), t(RBRC)                       )
-    r5(Elif, t(ELIF), n(Expr), t(LBRC), m(Stmt), t(RBRC)                       )
-    r4(Else, t(ELSE), t(LBRC), m(Stmt), t(RBRC)                                )
+    r1(Atom, t(NAME))
+    r1(Atom, t(NMBR))
 
-    r7(Dowh, t(DOWH), t(LBRC), m(Stmt), t(RBRC), t(WHIL), n(Expr), t(SCOL)     )
-    r5(Whil, t(WHIL), n(Expr), t(LBRC), m(Stmt), t(RBRC)                       )
+    r1(Expr, n(Atom))
+    r1(Expr, n(Pexp))
+    r1(Expr, n(Bexp))
+    r1(Expr, n(Uexp))
+    r1(Expr, n(Texp))
+    r1(Expr, n(Aexp))
 
-    r1(Atom, t(NAME)                                                           )
-    r1(Atom, t(NMBR)                                                           )
+    r3(Pexp, t(LPAR), n(Expr), t(RPAR))
 
-    r1(Expr, n(Atom)                                                           )
-    r1(Expr, n(Pexp)                                                           )
-    r1(Expr, n(Bexp)                                                           )
-    r1(Expr, n(Uexp)                                                           )
-    r1(Expr, n(Texp)                                                           )
-    r1(Expr, n(Aexp)                                                           )
+    r3(Bexp, n(Expr), t(EQUL), n(Expr))
+    r3(Bexp, n(Expr), t(NEQL), n(Expr))
+    r3(Bexp, n(Expr), t(LTHN), n(Expr))
+    r3(Bexp, n(Expr), t(GTHN), n(Expr))
+    r3(Bexp, n(Expr), t(LTEQ), n(Expr))
+    r3(Bexp, n(Expr), t(GTEQ), n(Expr))
+    r3(Bexp, n(Expr), t(CONJ), n(Expr))
+    r3(Bexp, n(Expr), t(DISJ), n(Expr))
+    r3(Bexp, n(Expr), t(PLUS), n(Expr))
+    r3(Bexp, n(Expr), t(MINS), n(Expr))
+    r3(Bexp, n(Expr), t(MULT), n(Expr))
+    r3(Bexp, n(Expr), t(DIVI), n(Expr))
+    r3(Bexp, n(Expr), t(MODU), n(Expr))
 
-    r3(Pexp, t(LPAR), n(Expr), t(RPAR)                                         )
+    r2(Uexp, t(PLUS), n(Expr))
+    r2(Uexp, t(MINS), n(Expr))
+    r2(Uexp, t(NEGA), n(Expr))
 
-    r3(Bexp, n(Expr), t(EQUL), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(NEQL), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(LTHN), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(GTHN), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(LTEQ), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(GTEQ), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(CONJ), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(DISJ), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(PLUS), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(MINS), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(MULT), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(DIVI), n(Expr)                                         )
-    r3(Bexp, n(Expr), t(MODU), n(Expr)                                         )
+    r5(Texp, n(Expr), t(QUES), n(Expr), t(COLN), n(Expr))
 
-    r2(Uexp, t(PLUS), n(Expr)                                                  )
-    r2(Uexp, t(MINS), n(Expr)                                                  )
-    r2(Uexp, t(NEGA), n(Expr)                                                  )
-
-    r5(Texp, n(Expr), t(QUES), n(Expr), t(COLN), n(Expr)                       )
-
-    r4(Aexp, t(NAME), t(LBRA), n(Expr), t(RBRA)                                )
+    r4(Aexp, t(NAME), t(LBRA), n(Expr), t(RBRA))
 };
 
 #undef r1
@@ -132,24 +146,26 @@ static struct {
 static void print_stack(void)
 {
     static const char *const nts[NT_COUNT] = {
-        "Unit",
-        "Stmt",
-        "Assn",
-        "Prnt",
-        "Ctrl",
-        "Cond",
-        "Elif",
-        "Else",
-        "Dowh",
-        "Whil",
-        "Atom",
-        "Expr",
-        "Pexp",
-        "Bexp",
-        "Uexp",
-        "Texp",
-        "Aexp",
+        "Unit",     // Non-terminal represents the start symbol of the grammar - the entire program.
+        "Stmt",     // Non-terminal represents a statement.
+        "Assn",     // Non-terminal represents an assignment statement.
+        "Prnt",     // Non-terminal represents a print statement.
+        "Inpt",     // Non-terminal represents an input statement.
+        "Ctrl",     // Non-terminal represents a control statement.
+        "Cond",     // Non-terminal represents a conditional statement.
+        "Elif",     // Non-terminal represents an "elif" branch of a conditional statement.
+        "Else",     // Non-terminal represents an "else" branch of a conditional statement.
+        "Dowh",     // Non-terminal represents a "do-while" loop statement.
+        "Whil",     // Non-terminal represents a "while" loop statement.
+        "Atom",     // Non-terminal represents an atomic expression.
+        "Expr",     // Non-terminal represents an expression.
+        "Pexp",     // Non-terminal represents a primary expression.
+        "Bexp",     // Non-terminal represents a binary expression.
+        "Uexp",     // Non-terminal represents a unary expression.
+        "Texp",     // Non-terminal represents a ternary expression.
+        "Aexp",     // Non-terminal represents an arithmetic expression.
     };
+
 
     for (size_t i = 0; i < stack.size; ++i) {
         const struct node *const node = &stack.nodes[i];
@@ -162,7 +178,7 @@ static void print_stack(void)
             printf(GREEN("$ "));
         } else {
             const ptrdiff_t len = node->token->end - node->token->beg;
-            printf(GREEN("%.*s "), (int) len, node->token->beg);
+            printf(GREEN(" %.*s "), (int) len, node->token->beg);
         }
     }
 
@@ -390,8 +406,10 @@ struct node parse(const struct token *const tokens, const size_t ntokens)
         }
 
         SHIFT_OR_NOMEM(&tokens[token_idx++]);
-        printf(CYAN("Shift: ")), print_stack();
-
+        if(development == 1){
+        	printf(CYAN("Shift: ")), print_stack();
+		}
+		
         try_reduce_again:;
         const struct rule *rule = grammar;
 
@@ -403,13 +421,17 @@ struct node parse(const struct token *const tokens, const size_t ntokens)
 
                 if (!do_shift) {
                     REDUCE_OR_NOMEM(rule, reduction_at, reduction_size);
-                    const ptrdiff_t rule_number = rule - grammar + 1;
-                    printf(ORANGE("Red%02td: "), rule_number), print_stack();
+                    if(development == 1){
+                    	const ptrdiff_t rule_number = rule - grammar + 1;
+                    	printf(ORANGE("Red%02td: "), rule_number), print_stack();
+                    }
                 }
 
                 if (do_shift || should_shift_post(rule, tokens, &token_idx)) {
                     SHIFT_OR_NOMEM(&tokens[token_idx++]);
-                    printf(CYAN("Shift: ")), print_stack();
+                    if(development == 1){
+                    	printf(CYAN("Shift: ")), print_stack();
+                    }
                 }
 
                 goto try_reduce_again;
@@ -422,9 +444,11 @@ struct node parse(const struct token *const tokens, const size_t ntokens)
 
     const int accepted = stack.size == 1 &&
         stack.nodes[0].nchildren && stack.nodes[0].nt == NT_Unit;
-
-    printf(accepted ? GREEN("ACCEPT ") : RED("REJECT ")), print_stack();
-
+	
+	if(development == 1){
+    	printf(accepted ? GREEN("ACCEPT ") : RED("REJECT ")), print_stack();
+	}
+	
     if (accepted) {
         const struct node ret = stack.nodes[0];
         return deallocate_stack(), ret;

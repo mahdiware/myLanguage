@@ -1,30 +1,36 @@
 #pragma once
 
+#ifndef PARSE_H
+#define PARSE_H
+
 #include <stdint.h>
 #include <stddef.h>
 
-enum {
-    NT_Unit,
-    NT_Stmt,
-    NT_Assn,
-    NT_Prnt,
-    NT_Ctrl,
-    NT_Cond,
-    NT_Elif,
-    NT_Else,
-    NT_Dowh,
-    NT_Whil,
-    NT_Atom,
-    NT_Expr,
-    NT_Pexp,
-    NT_Bexp,
-    NT_Uexp,
-    NT_Texp,
-    NT_Aexp,
-    NT_COUNT
-};
+#ifndef development
+	#define development 1
+#endif
 
-typedef uint8_t nt_t;
+enum {
+    NT_Unit,   // Non-terminal symbol for the entire program or unit
+    NT_Stmt,   // Non-terminal symbol for a statement
+    NT_Assn,   // Non-terminal symbol for an assignment statement
+    NT_Prnt,   // Non-terminal symbol for a print statement
+    NT_Inpt,   // Non-terminal symbol for an input statement
+    NT_Ctrl,   // Non-terminal symbol for a control statement (e.g., if, while, do-while)
+    NT_Cond,   // Non-terminal symbol for a conditional expression (e.g., if condition)
+    NT_Elif,   // Non-terminal symbol for an else-if clause
+    NT_Else,   // Non-terminal symbol for an else clause
+    NT_Dowh,   // Non-terminal symbol for a do-while loop
+    NT_Whil,   // Non-terminal symbol for a while loop
+    NT_Atom,   // Non-terminal symbol for an atomic expression
+    NT_Expr,   // Non-terminal symbol for an expression
+    NT_Pexp,   // Non-terminal symbol for a primary expression
+    NT_Bexp,   // Non-terminal symbol for a boolean expression
+    NT_Uexp,   // Non-terminal symbol for a unary expression
+    NT_Texp,   // Non-terminal symbol for a term expression
+    NT_Aexp,   // Non-terminal symbol for an arithmetic expression
+    NT_COUNT   // Total count of non-terminal symbols
+};
 
 struct token;
 struct node {
@@ -35,7 +41,7 @@ struct node {
         const struct token *token;
 
         struct {
-            nt_t nt;
+            uint8_t nt;
             struct node **children;
         };
     };
@@ -44,9 +50,9 @@ struct node {
 struct node parse(const struct token *, size_t);
 
 enum {
-    PARSE_OK,
-    PARSE_REJECT,
-    PARSE_NOMEM,
+    PARSE_OK,     // Parsing was successful
+    PARSE_REJECT, // Parsing was rejected or encountered an error
+    PARSE_NOMEM,  // Parsing failed due to memory allocation failure
 };
 
 #define parse_error(root) ({ \
@@ -55,3 +61,5 @@ enum {
 })
 
 void destroy_tree(struct node);
+
+#endif

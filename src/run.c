@@ -1,74 +1,82 @@
 #include "lex.h"
+#include "run.h"
 #include "parse.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static void run_stmt(const struct node *const);
-static void run_assn(const struct node *const);
-static void run_prnt(const struct node *const);
-static void run_ctrl(const struct node *const);
-static int eval_atom(const struct node *const);
-static int eval_expr(const struct node *const);
-static int eval_pexp(const struct node *const);
-static int eval_bexp(const struct node *const);
-static int eval_uexp(const struct node *const);
-static int eval_texp(const struct node *const);
-static int eval_aexp(const struct node *const);
+#include <ctype.h>
 
 #define VARSTORE_CAPACITY 128
 
+static void run_stmt(const struct node *const);     // Function to execute a statement node
+static void run_assn(const struct node *const);     // Function to execute an assignment node
+static void run_prnt(const struct node *const);     // Function to execute a print node
+static void run_ctrl(const struct node *const);     // Function to execute a control node
+static int eval_atom(const struct node *const);     // Function to evaluate an atomic expression node
+static int eval_expr(const struct node *const);     // Function to evaluate a generic expression node
+static int eval_pexp(const struct node *const);     // Function to evaluate a primary expression node
+static int eval_bexp(const struct node *const);     // Function to evaluate a binary expression node
+static int eval_uexp(const struct node *const);     // Function to evaluate a unary expression node
+static int eval_texp(const struct node *const);     // Function to evaluate a ternary expression node
+static int eval_aexp(const struct node *const);     // Function to evaluate an arithmetic expression node
+
 static struct {
-    size_t size;
+    size_t size;                                 // Current number of variables stored in the varstore
 
     struct {
-        const uint8_t *beg;
-        ptrdiff_t len;
-        size_t array_size;
-        int *values;
-    } vars[VARSTORE_CAPACITY];
+        const uint8_t *beg;                       // Beginning memory address of the variable name
+        ptrdiff_t len;                            // Length of the variable name
+        size_t array_size;                        // Size of the array, if the variable is an array
+        int *values;                              // Pointer to the array of variable values
+    } vars[VARSTORE_CAPACITY];                    // Array to store the variables
 } varstore;
+
 
 void run(const struct node *const unit)
 {
+    // Execute each statement in the program
     for (size_t stmt_idx = 1; stmt_idx < unit->nchildren - 1; ++stmt_idx) {
         run_stmt(unit->children[stmt_idx]);
     }
-
+    // Free the memory associated with variable values
     for (size_t var_idx = 0; var_idx < varstore.size; ++var_idx) {
         free(varstore.vars[var_idx].values);
     }
-
+    // Reset the size of the variable store
     varstore.size = 0;
 }
+
 
 static void run_stmt(const struct node *const stmt)
 {
     switch (stmt->children[0]->nt) {
-    case NT_Assn:
-        run_assn(stmt->children[0]);
-        break;
-
-    case NT_Prnt:
-        run_prnt(stmt->children[0]);
-        break;
-
-    case NT_Ctrl:
-        run_ctrl(stmt->children[0]);
-        break;
-
-    default:
-        abort();
+        case NT_Assn:                                  // If the statement is an assignment statement
+            run_assn(stmt->children[0]);               // Execute the run_assn function for the assignment
+            break;
+        case NT_Prnt:                                  // If the statement is a print statement
+            run_prnt(stmt->children[0]);               // Execute the run_prnt function for the print statement
+            break;		
+        case NT_Inpt:                                  // If the statement is an input statement
+            run_prnt(stmt->children[0]);               // Execute the run_prnt function for the input statement
+            break;
+        case NT_Ctrl:                                  // If the statement is a control statement
+            run_ctrl(stmt->children[0]);               // Execute the run_ctrl function for the control statement
+            break;
+        default:
+            abort();                                   // If the statement is of an unknown type, abort the program
     }
 }
 
 static void run_assn(const struct node *const assn)
 {
+    // Check if the left-hand side of the assignment is an array expression
     const int lhs_is_aexp = assn->children[0]->nchildren;
 
+    // Evaluate the array index if present, or set it to 0
     const int array_idx = lhs_is_aexp ?
         eval_expr(assn->children[0]->children[2]) : 0;
 
+    // Get the beginning position and length of the variable name or array name
     const uint8_t *const beg = lhs_is_aexp ?
         assn->children[0]->children[0]->token->beg :
         assn->children[0]->token->beg;
@@ -79,11 +87,14 @@ static void run_assn(const struct node *const assn)
 
     size_t var_idx;
 
+    // Search for the variable in the variable store
     for (var_idx = 0; var_idx < varstore.size; ++var_idx) {
+        // Check if the variable name matches and has the same length
         if (varstore.vars[var_idx].len == len &&
             !memcmp(varstore.vars[var_idx].beg, beg, len)) {
             const size_t array_size = varstore.vars[var_idx].array_size;
 
+            // Check if the variable is a non-array variable
             if (!array_size) {
                 fprintf(stderr, "warn: a previous reallocation has failed, "
                     "assignment has no effect\n");
@@ -91,14 +102,20 @@ static void run_assn(const struct node *const assn)
                 return;
             }
 
+            // Check if the array index is within the bounds
             if (array_idx >= 0 && array_idx < array_size) {
+                // Evaluate the expression on the right-hand side and assign the value
                 varstore.vars[var_idx].values[array_idx] =
                     eval_expr(assn->children[2]);
 
                 return;
-            } else if (array_idx >= 0) {
+            }
+            // Check if the array index is larger than the current array size
+            else if (array_idx >= 0) {
+                // Calculate the new size of the array by doubling it
                 const size_t new_size = (array_idx + 1) * 2;
 
+                // Reallocate memory for the array and store the new size
                 int *const tmp = realloc(
                     varstore.vars[var_idx].values, new_size * sizeof(int));
                 if (!tmp) {
@@ -111,6 +128,8 @@ static void run_assn(const struct node *const assn)
 
                 varstore.vars[var_idx].values = tmp;
                 varstore.vars[var_idx].array_size = new_size;
+
+                // Evaluate the expression on the right-hand side and assign the value
                 varstore.vars[var_idx].values[array_idx] =
                     eval_expr(assn->children[2]);
 
@@ -122,12 +141,15 @@ static void run_assn(const struct node *const assn)
         }
     }
 
+    // If the variable was not found in the variable store
     if (var_idx < VARSTORE_CAPACITY) {
+        // Check if the array index is negative
         if (array_idx < 0) {
             fprintf(stderr, "warn: negative array offset\n");
             return;
         }
 
+        // Allocate memory for the variable value array
         varstore.vars[var_idx].beg = beg;
         varstore.vars[var_idx].len = len;
         varstore.vars[var_idx].values = malloc((array_idx + 1) * sizeof(int));
@@ -139,6 +161,8 @@ static void run_assn(const struct node *const assn)
         }
 
         varstore.vars[var_idx].array_size = array_idx + 1;
+
+        // Evaluate the expression on the right-hand side and assign the value
         varstore.vars[var_idx].values[array_idx] = eval_expr(assn->children[2]);
         varstore.size++;
     } else {
@@ -148,15 +172,34 @@ static void run_assn(const struct node *const assn)
 
 static void run_prnt(const struct node *const prnt)
 {
+    // If there are 3 children, it means it's a print statement without an expression
     if (prnt->nchildren == 3) {
-        printf("%d\n", eval_expr(prnt->children[1]));
-    } else if (prnt->nchildren == 4) {
+        // Check if the second child (string literal) is present
+        if ((prnt->children[1]->token->beg) != NULL) {
+            const struct node *const strl = prnt->children[1];
+
+            // Extract the string from the token
+            const uint8_t *const beg = strl->token->beg + 1;
+            const uint8_t *const end = strl->token->end - 1;
+            const ptrdiff_t len = end - beg;
+
+            // Print the string
+            printf("%.*s\n", (int) len, beg);
+        } else {
+            // No string literal present, evaluate the expression and print the result
+            printf("%d\n", eval_expr(prnt->children[1]));
+        }
+    }
+    // If there are 4 children, it means it's a print statement with an expression
+    else if (prnt->nchildren == 4) {
         const struct node *const strl = prnt->children[1];
 
+        // Extract the string from the token
         const uint8_t *const beg = strl->token->beg + 1;
         const uint8_t *const end = strl->token->end - 1;
         const ptrdiff_t len = end - beg;
 
+        // Evaluate the expression and print the string with the evaluated result
         printf("%.*s%d\n", (int) len, beg, eval_expr(prnt->children[2]));
     }
 }
@@ -165,22 +208,28 @@ static void run_ctrl(const struct node *const ctrl)
 {
     switch (ctrl->children[0]->nt) {
     case NT_Cond: {
+        // Conditional statement
         const struct node *const cond = ctrl->children[0];
 
+        // Evaluate the condition expression
         if (eval_expr(cond->children[1])) {
+            // Execute the statements in the true branch
             const struct node *stmt = cond->children[3];
 
             while (stmt->nchildren) {
                 run_stmt(stmt++);
             }
         } else if (ctrl->nchildren >= 2) {
+            // Check for "elif" and "else" branches
             size_t child_idx = 1;
 
             do {
                 if (ctrl->children[child_idx]->nt == NT_Elif) {
+                    // Evaluate the condition expression of the "elif" branch
                     const struct node *const elif = ctrl->children[child_idx];
 
                     if (eval_expr(elif->children[1])) {
+                        // Execute the statements in the true branch of "elif"
                         const struct node *stmt = elif->children[3];
 
                         while (stmt->nchildren) {
@@ -190,6 +239,7 @@ static void run_ctrl(const struct node *const ctrl)
                         break;
                     }
                 } else {
+                    // Execute the statements in the "else" branch
                     const struct node *const els = ctrl->children[child_idx];
                     const struct node *stmt = els->children[2];
 
@@ -202,10 +252,12 @@ static void run_ctrl(const struct node *const ctrl)
     } break;
 
     case NT_Dowh: {
+        // Do-while loop
         const struct node *const dowh = ctrl->children[0];
         const struct node *const expr = dowh->children[dowh->nchildren - 2];
 
         do {
+            // Execute the statements in the loop body
             const struct node *stmt = dowh->children[2];
 
             while (stmt->nchildren) {
@@ -215,9 +267,11 @@ static void run_ctrl(const struct node *const ctrl)
     } break;
 
     case NT_Whil: {
+        // While loop
         const struct node *const whil = ctrl->children[0];
 
         while (eval_expr(whil->children[1])) {
+            // Execute the statements in the loop body
             const struct node *stmt = whil->children[3];
 
             while (stmt->nchildren) {
@@ -235,13 +289,16 @@ static int eval_atom(const struct node *const atom)
 {
     switch (atom->children[0]->token->tk) {
     case TK_NAME: {
+        // Variable name
         const uint8_t *const beg = atom->children[0]->token->beg;
         const ptrdiff_t len = atom->children[0]->token->end - beg;
 
+        // Search for the variable in the varstore
         for (size_t idx = 0; idx < varstore.size; ++idx) {
             if (varstore.vars[idx].len == len &&
                 !memcmp(varstore.vars[idx].beg, beg, len)) {
 
+                // Check if the variable is an array
                 if (varstore.vars[idx].array_size) {
                     return varstore.vars[idx].values[0];
                 } else {
@@ -254,10 +311,12 @@ static int eval_atom(const struct node *const atom)
     }
 
     case TK_NMBR: {
+        // Numeric value
         const uint8_t *const beg = atom->children[0]->token->beg;
         const uint8_t *const end = atom->children[0]->token->end;
         int result = 0, mult = 1;
 
+        // Convert the numeric value from string to integer
         for (ssize_t idx = end - beg - 1; idx >= 0; --idx, mult *= 10) {
             result += mult * (beg[idx] - '0');
         }
@@ -298,6 +357,7 @@ static int eval_expr(const struct node *const expr)
 
 static int eval_pexp(const struct node *const pexp)
 {
+    // Parenthesized expression, evaluate the expression inside
     return eval_expr(pexp->children[1]);
 }
 
@@ -305,15 +365,19 @@ static int eval_bexp(const struct node *const bexp)
 {
     switch (bexp->children[1]->token->tk) {
     case TK_PLUS:
+        // Addition
         return eval_expr(bexp->children[0]) + eval_expr(bexp->children[2]);
 
     case TK_MINS:
+        // Subtraction
         return eval_expr(bexp->children[0]) - eval_expr(bexp->children[2]);
 
     case TK_MULT:
+        // Multiplication
         return eval_expr(bexp->children[0]) * eval_expr(bexp->children[2]);
 
     case TK_DIVI: {
+        // Division
         const int dividend = eval_expr(bexp->children[0]);
         const int divisor = eval_expr(bexp->children[2]);
 
@@ -326,30 +390,39 @@ static int eval_bexp(const struct node *const bexp)
     }
 
     case TK_MODU:
+        // Modulo
         return eval_expr(bexp->children[0]) % eval_expr(bexp->children[2]);
 
     case TK_EQUL:
+        // Equality
         return eval_expr(bexp->children[0]) == eval_expr(bexp->children[2]);
 
     case TK_NEQL:
+        // Inequality
         return eval_expr(bexp->children[0]) != eval_expr(bexp->children[2]);
 
     case TK_LTHN:
+        // Less than
         return eval_expr(bexp->children[0]) < eval_expr(bexp->children[2]);
 
     case TK_GTHN:
+        // Greater than
         return eval_expr(bexp->children[0]) > eval_expr(bexp->children[2]);
 
     case TK_LTEQ:
+        // Less than or equal to
         return eval_expr(bexp->children[0]) <= eval_expr(bexp->children[2]);
 
     case TK_GTEQ:
+        // Greater than or equal to
         return eval_expr(bexp->children[0]) >= eval_expr(bexp->children[2]);
 
     case TK_CONJ:
+        // Logical conjunction (AND)
         return eval_expr(bexp->children[0]) && eval_expr(bexp->children[2]);
 
     case TK_DISJ:
+        // Logical disjunction (OR)
         return eval_expr(bexp->children[0]) || eval_expr(bexp->children[2]);
 
     default:
@@ -359,14 +432,18 @@ static int eval_bexp(const struct node *const bexp)
 
 static int eval_uexp(const struct node *const uexp)
 {
+    // Evaluate unary expressions
     switch (uexp->children[0]->token->tk) {
     case TK_PLUS:
+        // Unary plus
         return eval_expr(uexp->children[1]);
 
     case TK_MINS:
+        // Unary minus
         return -eval_expr(uexp->children[1]);
 
     case TK_NEGA:
+        // Logical negation
         return !eval_expr(uexp->children[1]);
 
     default:
@@ -376,24 +453,29 @@ static int eval_uexp(const struct node *const uexp)
 
 static int eval_texp(const struct node *const texp)
 {
+    // Evaluate ternary expressions
     return eval_expr(texp->children[0]) ?
         eval_expr(texp->children[2]) : eval_expr(texp->children[4]);
 }
 
 static int eval_aexp(const struct node *const aexp)
 {
+    // Evaluate array expressions
     const uint8_t *const beg = aexp->children[0]->token->beg;
     const ptrdiff_t len = aexp->children[0]->token->end - beg;
     const int array_idx = eval_expr(aexp->children[2]);
 
+    // Check if the array index is negative
     if (array_idx < 0) {
         return fprintf(stderr, "warn: negative array offset\n"), 0;
     }
 
+    // Search for the array in the varstore
     for (size_t idx = 0; idx < varstore.size; ++idx) {
         if (varstore.vars[idx].len == len &&
             !memcmp(varstore.vars[idx].beg, beg, len)) {
 
+            // Check if the array index is within the bounds
             if (array_idx < varstore.vars[idx].array_size) {
                 return varstore.vars[idx].values[array_idx];
             } else {

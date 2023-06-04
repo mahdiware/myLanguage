@@ -25,7 +25,7 @@ static void print_tokens(const struct token *const tokens, const size_t ntokens,
         }
 
         const int len = token.end - token.beg;
-
+        
         if (i == ntokens - 1 && error == LEX_UNKNOWN_TOKEN) {
             printf(RED("%.*s") CYAN("< Unknown token\n"), len ?: 1, token.beg);
         } else if (token.tk == TK_LCOM || token.tk == TK_BCOM) {
@@ -38,16 +38,12 @@ static void print_tokens(const struct token *const tokens, const size_t ntokens,
     }
 }
 
-int main(int argc, char **argv)
+int running(int argc, char **argv)
 {
     int fd;
     size_t size;
     struct stat statbuf;
     int exit_status = EXIT_FAILURE;
-
-    if (argc != 2) {
-        return fprintf(stderr, "Usage: %s <file>\n", argv[0]), exit_status;
-    }
 
     if ((fd = open(argv[1], O_RDONLY)) < 0) {
         return perror("open"), exit_status;
@@ -68,23 +64,23 @@ int main(int argc, char **argv)
         return perror("mmap"), close(fd), exit_status;
     }
 
-    puts(WHITE("*** Lexing ***"));
     struct token *tokens;
     size_t ntokens;
     const int lex_error = lex(mapped, size, &tokens, &ntokens);
 
-    if (!lex_error || lex_error == LEX_UNKNOWN_TOKEN) {
+    if ((!lex_error || lex_error == LEX_UNKNOWN_TOKEN) && development == 1) {
+    	puts(WHITE("*** Lexing ***"));
         print_tokens(tokens, ntokens, lex_error);
     } else if (lex_error == LEX_NOMEM) {
         puts(RED("The lexer could not allocate memory."));
     }
 
     if (!lex_error) {
-        puts(WHITE("\n*** Parsing ***"));
+    	if(development == 1) puts(WHITE("\n*** Parsing ***"));
         const struct node root = parse(tokens, ntokens);
 
         if (!parse_error(root)) {
-            puts(WHITE("\n*** Running ***"));
+        	if(development == 1) puts(WHITE("\n*** Running ***"));
             run(&root);
             destroy_tree(root);
             exit_status = EXIT_SUCCESS;
@@ -97,3 +93,10 @@ int main(int argc, char **argv)
     return exit_status;
 }
 
+int main(int argc, char **argv)
+{
+	if (argc != 2) {
+        return fprintf(stderr, "Usage: %s <file>\n", argv[0]), EXIT_FAILURE;
+    }
+	running(argc, argv);
+}

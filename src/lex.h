@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef LEX_H
+#define LEX_H
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -13,58 +16,60 @@
 #define WHITE(s)          COLOURED(s, 1, 37)
 
 enum {
-    TK_NAME,
-    TK_NMBR,
-    TK_STRL,
-    TK_WSPC,
-    TK_LCOM,
-    TK_BCOM,
-    TK_LPAR,
-    TK_RPAR,
-    TK_LBRA,
-    TK_RBRA,
-    TK_LBRC,
-    TK_RBRC,
-    TK_COND,
-    TK_ELIF,
-    TK_ELSE,
-    TK_DOWH,
-    TK_WHIL,
-    TK_ASSN,
-    TK_EQUL,
-    TK_NEQL,
-    TK_LTHN,
-    TK_GTHN,
-    TK_LTEQ,
-    TK_GTEQ,
-    TK_CONJ,
-    TK_DISJ,
-    TK_PLUS,
-    TK_MINS,
-    TK_MULT,
-    TK_DIVI,
-    TK_MODU,
-    TK_NEGA,
-    TK_PRNT,
-    TK_SCOL,
-    TK_QUES,
-    TK_COLN,
-    TK_COUNT,
-    TK_FBEG,
-    TK_FEND,
+    TK_NAME,   // Token for a name
+    TK_NMBR,   // Token for a number
+    TK_STRL,   // Token for a string literal
+    TK_WSPC,   // Token for whitespace
+    TK_LCOM,   // Token for a line comment
+    TK_BCOM,   // Token for a block comment
+    TK_LPAR,   // Token for a left parenthesis '('
+    TK_RPAR,   // Token for a right parenthesis ')'
+    TK_LBRA,   // Token for a left bracket '['
+    TK_RBRA,   // Token for a right bracket ']'
+    TK_LBRC,   // Token for a left brace '{'
+    TK_RBRC,   // Token for a right brace '}'
+    TK_COND,   // Token for the 'if' keyword
+    TK_ELIF,   // Token for the 'elif' keyword
+    TK_ELSE,   // Token for the 'else' keyword
+    TK_DOWH,   // Token for the 'do-while' keyword
+    TK_WHIL,   // Token for the 'while' keyword
+    TK_ASSN,   // Token for the assignment operator '='
+    TK_EQUL,   // Token for the equality operator '=='
+    TK_NEQL,   // Token for the inequality operator '!='
+    TK_LTHN,   // Token for the less than operator '<'
+    TK_GTHN,   // Token for the greater than operator '>'
+    TK_LTEQ,   // Token for the less than or equal to operator '<='
+    TK_GTEQ,   // Token for the greater than or equal to operator '>='
+    TK_CONJ,   // Token for the logical conjunction operator '&&'
+    TK_DISJ,   // Token for the logical disjunction operator '||'
+    TK_PLUS,   // Token for the plus operator '+'
+    TK_MINS,   // Token for the minus operator '-'
+    TK_MULT,   // Token for the multiplication operator '*'
+    TK_DIVI,   // Token for the division operator '/'
+    TK_MODU,   // Token for the modulo operator '%'
+    TK_NEGA,   // Token for the logical negation operator '!'
+    TK_PRNT,   // Token for the 'print' keyword
+    TK_INPT,   // Token for the 'input' keyword
+    TK_SCOL,   // Token for the semicolon ';'
+    TK_QUES,   // Token for the question mark '?'
+    TK_COLN,   // Token for the colon ':'
+    // Tk_COMA, // Token for the comma ','
+    TK_COUNT,  // Total number of tokens
+    TK_FBEG,   // Token for the beginning of a file
+    TK_FEND,   // Token for the end of a file
 };
 
-typedef uint8_t tk_t;
-
 struct token {
-    const uint8_t *beg, *end;
-    tk_t tk;
+    const uint8_t *beg, *end;   // Pointers to the beginning and end of the token in the input
+    uint8_t tk;                 // Token type
 };
 
 int lex(const uint8_t *, size_t, struct token **, size_t *);
 
 enum {
-    LEX_OK,
-    LEX_NOMEM,
-    LEX_UNKNOWN_TOKEN,
+    LEX_OK,                 // Lexical analysis completed successfully
+    LEX_NOMEM,              // Out of memory error during lexical analysis
+    LEX_UNKNOWN_TOKEN,      // Unknown token encountered during lexical analysis
 };
+
+#endif
