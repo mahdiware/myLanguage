@@ -24,7 +24,6 @@
 // no will expand to { .tk = TK_COUNT, .is_tk = 1, .is_mt = 0 } which represents a placeholder symbol
 
 
-
 #define r1(_lhs, t1) \
     { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, no, no, t1, } }, // Production rule with 1 terminal symbol
 #define r2(_lhs, t1, t2) \
@@ -61,64 +60,68 @@ static const struct rule {
 } grammar[] = {
     r3(Unit, t(FBEG), m(Stmt), t(FEND))
 
-    r1(Stmt, n(Assn))
-    r1(Stmt, n(Prnt))
-/**/r1(Stmt, n(Inpt))
-    r1(Stmt, n(Ctrl))
+    r1(Stmt, n(Assn))        // Statement can be an assignment
+    r1(Stmt, n(Prnt))        // Statement can be a print statement
+/**/r1(Stmt, n(Inpt))        // Statement can be an input statement
+    r1(Stmt, n(Ctrl))        // Statement can be a control-flow statement
 	
-    r4(Assn, t(NAME), t(ASSN), n(Expr), t(SCOL))
-    r4(Assn, n(Aexp), t(ASSN), n(Expr), t(SCOL))
-
-	r3(Prnt, t(PRNT), t(STRL), t(SCOL))
-    r3(Prnt, t(PRNT), n(Expr), t(SCOL))
-    r4(Prnt, t(PRNT), t(STRL), n(Expr), t(SCOL))
-/**/r3(Inpt, t(INPT), n(Expr), t(SCOL))	
+	r4(Assn, t(NAME), t(ASSN), t(STRL), t(SCOL))        // Assignment: variable = "string";
+    r4(Assn, n(Aexp), t(ASSN), t(STRL), t(SCOL))        // Assignment: array[index] = "string";
+    
+    r4(Assn, t(NAME), t(ASSN), n(Expr), t(SCOL))        // Assignment: variable = expression;
+    r4(Assn, n(Aexp), t(ASSN), n(Expr), t(SCOL))        // Assignment: array[index] = expression;
+    
+    r3(Prnt, t(PRNT), t(STRL), t(SCOL))        // Print statement: print "string";
+    r3(Prnt, t(PRNT), n(Expr), t(SCOL))        // Print statement: print expression;
+    r4(Prnt, t(PRNT), t(STRL), n(Expr), t(SCOL))        // Print statement: print "string" expression;
+/**/r3(Inpt, t(INPT), n(Expr), t(SCOL))        // Input statement: input(expression);
 	
-    r2(Ctrl, n(Cond), m(Elif))
-    r3(Ctrl, n(Cond), m(Elif), n(Else))
-    r1(Ctrl, n(Dowh))
-    r1(Ctrl, n(Whil))
+    r2(Ctrl, n(Cond), m(Elif))        // Control-flow statement: if (condition) { statements } elif (condition) { statements }
+    r3(Ctrl, n(Cond), m(Elif), n(Else))        // Control-flow statement: if (condition) { statements } elif (condition) { statements } else { statements }
+    r1(Ctrl, n(Dowh))        // Control-flow statement: do { statements } while (condition);
+    r1(Ctrl, n(Whil))        // Control-flow statement: while (condition) { statements }
+    
+    r5(Cond, t(COND), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // Conditional statement: if (condition) { statements }
+    r5(Elif, t(ELIF), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // Elif statement: elif (condition) { statements }
+    r4(Else, t(ELSE), t(LBRC), m(Stmt), t(RBRC))        // Else statement: else { statements }
+    
+    r7(Dowh, t(DOWH), t(LBRC), m(Stmt), t(RBRC), t(WHIL), n(Expr), t(SCOL))        // Do-while loop: do { statements } while (condition);
+    r5(Whil, t(WHIL), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // While loop: while (condition) { statements }
+    
+    r1(Atom, t(NAME))        // Atom can be a variable name
+    r1(Atom, t(NMBR))        // Atom can be a number
+    
+    r1(Expr, n(Atom))        // Expression can be an atom
+    r1(Expr, n(Pexp))        // Expression can be a parenthesized expression
+    r1(Expr, n(Bexp))        // Expression can be a binary expression
+    r1(Expr, n(Uexp))        // Expression can be a unary expression
+    r1(Expr, n(Texp))        // Expression can be a ternary expression
+    r1(Expr, n(Aexp))        // Expression can be an array expression
+    
+    r3(Pexp, t(LPAR), n(Expr), t(RPAR))        // Parenthesized expression: (expression)
+    
+    r3(Bexp, n(Expr), t(EQUL), n(Expr))        // Binary expression: expression == expression
+    r3(Bexp, n(Expr), t(NEQL), n(Expr))        // Binary expression: expression != expression
+    r3(Bexp, n(Expr), t(LTHN), n(Expr))        // Binary expression: expression < expression
+    r3(Bexp, n(Expr), t(GTHN), n(Expr))        // Binary expression: expression > expression
+    r3(Bexp, n(Expr), t(LTEQ), n(Expr))        // Binary expression: expression <= expression
+    r3(Bexp, n(Expr), t(GTEQ), n(Expr))        // Binary expression: expression >= expression
+    r3(Bexp, n(Expr), t(CONJ), n(Expr))        // Binary expression: expression && expression
+    r3(Bexp, n(Expr), t(DISJ), n(Expr))        // Binary expression: expression || expression
+    r3(Bexp, n(Expr), t(PLUS), n(Expr))        // Binary expression: expression + expression
+    r3(Bexp, n(Expr), t(MINS), n(Expr))        // Binary expression: expression - expression
+    r3(Bexp, n(Expr), t(MULT), n(Expr))        // Binary expression: expression * expression
+    r3(Bexp, n(Expr), t(DIVI), n(Expr))        // Binary expression: expression / expression
+    r3(Bexp, n(Expr), t(MODU), n(Expr))        // Binary expression: expression % expression
+    
+    r2(Uexp, t(PLUS), n(Expr))        // Unary expression: +expression
+    r2(Uexp, t(MINS), n(Expr))        // Unary expression: -expression
+    r2(Uexp, t(NEGA), n(Expr))        // Unary expression: !expression
+    
+    r5(Texp, n(Expr), t(QUES), n(Expr), t(COLN), n(Expr))        // Ternary expression: expression ? expression : expression
+    
+    r4(Aexp, t(NAME), t(LBRA), n(Expr), t(RBRA))        // Array expression: array[index]
 
-    r5(Cond, t(COND), n(Expr), t(LBRC), m(Stmt), t(RBRC))
-    r5(Elif, t(ELIF), n(Expr), t(LBRC), m(Stmt), t(RBRC))
-    r4(Else, t(ELSE), t(LBRC), m(Stmt), t(RBRC))
-
-    r7(Dowh, t(DOWH), t(LBRC), m(Stmt), t(RBRC), t(WHIL), n(Expr), t(SCOL))
-    r5(Whil, t(WHIL), n(Expr), t(LBRC), m(Stmt), t(RBRC))
-
-    r1(Atom, t(NAME))
-    r1(Atom, t(NMBR))
-
-    r1(Expr, n(Atom))
-    r1(Expr, n(Pexp))
-    r1(Expr, n(Bexp))
-    r1(Expr, n(Uexp))
-    r1(Expr, n(Texp))
-    r1(Expr, n(Aexp))
-
-    r3(Pexp, t(LPAR), n(Expr), t(RPAR))
-
-    r3(Bexp, n(Expr), t(EQUL), n(Expr))
-    r3(Bexp, n(Expr), t(NEQL), n(Expr))
-    r3(Bexp, n(Expr), t(LTHN), n(Expr))
-    r3(Bexp, n(Expr), t(GTHN), n(Expr))
-    r3(Bexp, n(Expr), t(LTEQ), n(Expr))
-    r3(Bexp, n(Expr), t(GTEQ), n(Expr))
-    r3(Bexp, n(Expr), t(CONJ), n(Expr))
-    r3(Bexp, n(Expr), t(DISJ), n(Expr))
-    r3(Bexp, n(Expr), t(PLUS), n(Expr))
-    r3(Bexp, n(Expr), t(MINS), n(Expr))
-    r3(Bexp, n(Expr), t(MULT), n(Expr))
-    r3(Bexp, n(Expr), t(DIVI), n(Expr))
-    r3(Bexp, n(Expr), t(MODU), n(Expr))
-
-    r2(Uexp, t(PLUS), n(Expr))
-    r2(Uexp, t(MINS), n(Expr))
-    r2(Uexp, t(NEGA), n(Expr))
-
-    r5(Texp, n(Expr), t(QUES), n(Expr), t(COLN), n(Expr))
-
-    r4(Aexp, t(NAME), t(LBRA), n(Expr), t(RBRA))
 };
 
 #undef r1
