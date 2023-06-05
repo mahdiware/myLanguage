@@ -14,7 +14,7 @@ static void run_prnt(const struct node *const);     // Function to execute a pri
 static void run_ctrl(const struct node *const);     // Function to execute a control node
 static int eval_atom(const struct node *const);     // Function to evaluate an atomic expression node
 static int eval_expr(const struct node *const);     // Function to evaluate a generic expression node
-static int eval_pexp(const struct node *const);     // Function to evaluate a primary expression node
+static int eval_pexp(const struct node *const);     // Function to evaluate a parenthesized expression node
 static int eval_bexp(const struct node *const);     // Function to evaluate a binary expression node
 static int eval_uexp(const struct node *const);     // Function to evaluate a unary expression node
 static int eval_texp(const struct node *const);     // Function to evaluate a ternary expression node
@@ -28,6 +28,8 @@ static struct {
         ptrdiff_t len;                            // Length of the variable name
         size_t array_size;                        // Size of the array, if the variable is an array
         int *values;                              // Pointer to the array of variable values
+        const uint8_t *strbeg;                       // Beginning memory address of the variable Value
+        ptrdiff_t strlen;                            // Length of the variable Value
     } vars[VARSTORE_CAPACITY];                    // Array to store the variables
 } varstore;
 
@@ -45,6 +47,11 @@ void run(const struct node *const unit)
     // Reset the size of the variable store
     varstore.size = 0;
 }
+
+#define prnt(size, ...) \
+	char strprnt[size]; \
+	sprintf(strprnt, __VA_ARGS__); \
+	puts(strprnt); \
 
 
 static void run_stmt(const struct node *const stmt)
@@ -69,9 +76,10 @@ static void run_stmt(const struct node *const stmt)
 
 static void run_assn(const struct node *const assn)
 {
+	
     // Check if the left-hand side of the assignment is an array expression
     const int lhs_is_aexp = assn->children[0]->nchildren;
-
+	
     // Evaluate the array index if present, or set it to 0
     const int array_idx = lhs_is_aexp ?
         eval_expr(assn->children[0]->children[2]) : 0;
@@ -80,20 +88,18 @@ static void run_assn(const struct node *const assn)
     const uint8_t *const beg = lhs_is_aexp ?
         assn->children[0]->children[0]->token->beg :
         assn->children[0]->token->beg;
-
+	
     const ptrdiff_t len = lhs_is_aexp ?
         assn->children[0]->children[0]->token->end - beg :
         assn->children[0]->token->end - beg;
 
     size_t var_idx;
-
+	
     // Search for the variable in the variable store
     for (var_idx = 0; var_idx < varstore.size; ++var_idx) {
         // Check if the variable name matches and has the same length
-        if (varstore.vars[var_idx].len == len &&
-            !memcmp(varstore.vars[var_idx].beg, beg, len)) {
+        if (varstore.vars[var_idx].len == len && !memcmp(varstore.vars[var_idx].beg, beg, len)) {
             const size_t array_size = varstore.vars[var_idx].array_size;
-
             // Check if the variable is a non-array variable
             if (!array_size) {
                 fprintf(stderr, "warn: a previous reallocation has failed, "
@@ -101,13 +107,24 @@ static void run_assn(const struct node *const assn)
 
                 return;
             }
-
+            //node string value
+			const struct node *const strl = assn->children[2];
+			const uint8_t *const str_beg = strl->token->beg + 1;
+			const uint8_t *const str_end = strl->token->end - 1;
+			const ptrdiff_t str_len = str_end - str_beg;
+		        	
             // Check if the array index is within the bounds
             if (array_idx >= 0 && array_idx < array_size) {
-                // Evaluate the expression on the right-hand side and assign the value
-                varstore.vars[var_idx].values[array_idx] =
-                    eval_expr(assn->children[2]);
-
+            	if(assn->children[2]->token->tk == TK_STRL){
+            		varstore.vars[var_idx].strbeg = str_beg;
+        			varstore.vars[var_idx].strlen = str_len;
+					// Evaluate the expression on the right-hand side and assign the value
+                	varstore.vars[var_idx].values[array_idx] = 0;
+            	}else{
+                	// Evaluate the expression on the right-hand side and assign the value
+                	varstore.vars[var_idx].values[array_idx] =
+                    	eval_expr(assn->children[2]);
+				}
                 return;
             }
             // Check if the array index is larger than the current array size
@@ -128,11 +145,17 @@ static void run_assn(const struct node *const assn)
 
                 varstore.vars[var_idx].values = tmp;
                 varstore.vars[var_idx].array_size = new_size;
-
-                // Evaluate the expression on the right-hand side and assign the value
-                varstore.vars[var_idx].values[array_idx] =
-                    eval_expr(assn->children[2]);
-
+				
+				if(assn->children[2]->token->tk == TK_STRL){
+					varstore.vars[var_idx].strbeg = str_beg;
+        			varstore.vars[var_idx].strlen = str_len;
+					// Evaluate the expression on the right-hand side and assign the value
+                	varstore.vars[var_idx].values[array_idx] = 0;
+				}else{
+					// Evaluate the expression on the right-hand side and assign the value
+                	varstore.vars[var_idx].values[array_idx] =
+                    	eval_expr(assn->children[2]);
+				}
                 return;
             } else {
                 fprintf(stderr, "warn: negative array offset\n");
@@ -140,7 +163,7 @@ static void run_assn(const struct node *const assn)
             }
         }
     }
-
+	
     // If the variable was not found in the variable store
     if (var_idx < VARSTORE_CAPACITY) {
         // Check if the array index is negative
@@ -152,19 +175,34 @@ static void run_assn(const struct node *const assn)
         // Allocate memory for the variable value array
         varstore.vars[var_idx].beg = beg;
         varstore.vars[var_idx].len = len;
-        varstore.vars[var_idx].values = malloc((array_idx + 1) * sizeof(int));
+        varstore.vars[var_idx].values = malloc((array_idx + 1) * sizeof(char *));
         varstore.vars[var_idx].array_size = 0;
+		
+		
+		const struct node *const strl = assn->children[2];
 
-        if (!varstore.vars[var_idx].values) {
+        const uint8_t *const strbeg = strl->token->beg + 1;
+        const uint8_t *const strend = strl->token->end - 1;
+        const ptrdiff_t strlen = strend - strbeg;
+		
+		if (!varstore.vars[var_idx].values) {
             perror("malloc");
             return;
         }
-
+		
         varstore.vars[var_idx].array_size = array_idx + 1;
 
-        // Evaluate the expression on the right-hand side and assign the value
-        varstore.vars[var_idx].values[array_idx] = eval_expr(assn->children[2]);
-        varstore.size++;
+		if(assn->children[2]->token->tk == TK_STRL){
+			// Evaluate the expression on the right-hand side and assign the value
+        	varstore.vars[var_idx].strbeg = strbeg;
+        	varstore.vars[var_idx].strlen = strlen;
+        	varstore.vars[var_idx].values[array_idx] = 0;
+
+		}else{
+        	// Evaluate the expression on the right-hand side and assign the value
+        	varstore.vars[var_idx].values[array_idx] = eval_expr(assn->children[2]);
+		}
+		varstore.size++;
     } else {
         fprintf(stderr, "warn: varstore exhausted, assignment has no effect\n");
     }
@@ -174,24 +212,23 @@ static void run_prnt(const struct node *const prnt)
 {
     // If there are 3 children, it means it's a print statement without an expression
     if (prnt->nchildren == 3) {
-        // Check if the second child (string literal) is present
-        if ((prnt->children[1]->token->beg) != NULL) {
+        
+        if (prnt->children[1]->token->tk == TK_STRL) {
             const struct node *const strl = prnt->children[1];
-
-            // Extract the string from the token
-            const uint8_t *const beg = strl->token->beg + 1;
-            const uint8_t *const end = strl->token->end - 1;
-            const ptrdiff_t len = end - beg;
-
-            // Print the string
+            
+        	// Extract the string from the token
+        	const uint8_t *const beg = strl->token->beg + 1;
+        	const uint8_t *const end = strl->token->end - 1;
+        	const ptrdiff_t len = end - beg;
+        	
+        	// Print the string
             printf("%.*s\n", (int) len, beg);
         } else {
             // No string literal present, evaluate the expression and print the result
             printf("%d\n", eval_expr(prnt->children[1]));
         }
-    }
-    // If there are 4 children, it means it's a print statement with an expression
-    else if (prnt->nchildren == 4) {
+		// If there are 4 children, it means it's a print statement with an expression
+    } else if (prnt->nchildren == 4) {
         const struct node *const strl = prnt->children[1];
 
         // Extract the string from the token
@@ -287,20 +324,18 @@ static void run_ctrl(const struct node *const ctrl)
 
 static int eval_atom(const struct node *const atom)
 {
-    switch (atom->children[0]->token->tk) {
+	switch (atom->children[0]->token->tk) {
     case TK_NAME: {
         // Variable name
         const uint8_t *const beg = atom->children[0]->token->beg;
         const ptrdiff_t len = atom->children[0]->token->end - beg;
-
+		
         // Search for the variable in the varstore
         for (size_t idx = 0; idx < varstore.size; ++idx) {
-            if (varstore.vars[idx].len == len &&
-                !memcmp(varstore.vars[idx].beg, beg, len)) {
-
+            if (varstore.vars[idx].len == len && !memcmp(varstore.vars[idx].beg, beg, len)) {
                 // Check if the variable is an array
                 if (varstore.vars[idx].array_size) {
-                    return varstore.vars[idx].values[0];
+                	return varstore.vars[idx].values[0];
                 } else {
                     return 0;
                 }
