@@ -4,7 +4,7 @@ if (number == 20) {
 	print "number is equal 20";
 }
 
-salary = 10;
+number[1] = 10;
 
-print "salary is $" + salary;
+print "number[1] is: " + number[1];
 print "This program is working";
