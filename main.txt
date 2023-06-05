@@ -1,0 +1,4 @@
+number = 7272250;
+number = "hello world!";
+number = "yeah";
+print number;
