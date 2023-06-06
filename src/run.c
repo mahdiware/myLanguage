@@ -53,7 +53,6 @@ void run(const struct node *const unit)
 	sprintf(strprnt, __VA_ARGS__); \
 	puts(strprnt); \
 
-
 static void run_stmt(const struct node *const stmt)
 {
     switch (stmt->children[0]->nt) {
@@ -121,6 +120,8 @@ static void run_assn(const struct node *const assn)
 					// Evaluate the expression on the right-hand side and assign the value
                 	varstore.vars[var_idx].values[array_idx] = 0;
             	}else{
+            		varstore.vars[var_idx].strlen = 0;
+            		varstore.vars[var_idx].strbeg = NULL;
                 	// Evaluate the expression on the right-hand side and assign the value
                 	varstore.vars[var_idx].values[array_idx] =
                     	eval_expr(assn->children[2]);
@@ -152,6 +153,8 @@ static void run_assn(const struct node *const assn)
 					// Evaluate the expression on the right-hand side and assign the value
                 	varstore.vars[var_idx].values[array_idx] = 0;
 				}else{
+					varstore.vars[var_idx].strbeg = NULL;
+					varstore.vars[var_idx].strlen = 0;
 					// Evaluate the expression on the right-hand side and assign the value
                 	varstore.vars[var_idx].values[array_idx] =
                     	eval_expr(assn->children[2]);
@@ -199,6 +202,8 @@ static void run_assn(const struct node *const assn)
         	varstore.vars[var_idx].values[array_idx] = 0;
 
 		}else{
+			varstore.vars[var_idx].strlen = 0;
+			varstore.vars[var_idx].strbeg = NULL;
         	// Evaluate the expression on the right-hand side and assign the value
         	varstore.vars[var_idx].values[array_idx] = eval_expr(assn->children[2]);
 		}
@@ -210,9 +215,9 @@ static void run_assn(const struct node *const assn)
 
 static void run_prnt(const struct node *const prnt)
 {
-    // If there are 3 children, it means it's a print statement without an expression
+    
+	// If there are 3 children, it means it's a print statement without an expression
     if (prnt->nchildren == 3) {
-        
         if (prnt->children[1]->token->tk == TK_STRL) {
             const struct node *const strl = prnt->children[1];
             
@@ -224,7 +229,19 @@ static void run_prnt(const struct node *const prnt)
         	// Print the string
             printf("%.*s\n", (int) len, beg);
         } else {
-            // No string literal present, evaluate the expression and print the result
+        	if(prnt->children[1]->children[0]->token->tk==TK_NAME){
+        		const uint8_t *const bbeg = prnt->children[1]->children[0]->children[0]->token->beg;
+        		const ptrdiff_t blen = prnt->children[1]->children[0]->children[0]->token->end - bbeg;
+	        	for (size_t idx = 0; idx < varstore.size; ++idx) {
+			        if (varstore.vars[idx].len == blen && !memcmp(varstore.vars[idx].beg, bbeg, blen)) {
+			            if (varstore.vars[idx].array_size && varstore.vars[idx].strbeg != NULL) {
+			                printf("%.*s\n", varstore.vars[idx].strlen, varstore.vars[idx].strbeg);
+			                return;
+			            }
+			        }
+			    }
+        	}
+		    
             printf("%d\n", eval_expr(prnt->children[1]));
         }
 		// If there are 4 children, it means it's a print statement with an expression
@@ -235,7 +252,20 @@ static void run_prnt(const struct node *const prnt)
         const uint8_t *const beg = strl->token->beg + 1;
         const uint8_t *const end = strl->token->end - 1;
         const ptrdiff_t len = end - beg;
-
+		
+		if(prnt->children[2]->children[0]->token->tk==TK_NAME){
+        	const uint8_t *const bbeg = prnt->children[2]->children[0]->children[0]->token->beg;
+        	const ptrdiff_t blen = prnt->children[2]->children[0]->children[0]->token->end - bbeg;
+	        for (size_t idx = 0; idx < varstore.size; ++idx) {
+			    if (varstore.vars[idx].len == blen && !memcmp(varstore.vars[idx].beg, bbeg, blen)) {
+			        if (varstore.vars[idx].array_size && varstore.vars[idx].strbeg != NULL) {
+			            printf("%.*s%.*s\n", (int) len, beg, varstore.vars[idx].strlen, varstore.vars[idx].strbeg);
+			            return;
+			        }
+			    }
+			}
+        }
+		
         // Evaluate the expression and print the string with the evaluated result
         printf("%.*s%d\n", (int) len, beg, eval_expr(prnt->children[2]));
     }
