@@ -1,4 +1,2 @@
-variable = 2023;
-variable = "Hello World!";
-variable = 2023;
-print "variable : " variable;
+name = "mahdiware";
+print "my name is " name;
