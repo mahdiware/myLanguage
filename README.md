@@ -23,17 +23,20 @@ The interpreter is straightforward. It begins at the top of the parse tree and t
   * `while (Expr) { N✕Stmt }`
   * `do { N✕Stmt } while (Expr);`
 
-* Variable and array assignment (integers only, `Name` is equivalent to `Name[0]`):
+* Variable and array assignment (`Name` is equivalent to `Name[0]`):
   * `Name = Expr;`
+  * `Name = Strl;`
   * `Name[Expr] = Expr;`
+  * `Name[Expr] = Strl;`  It is under maintenance 
 
-* Printing to standard output (integers only):
+* Printing to standard output:
   * `print "Placeholder: ";`
   * `print "Placeholder: " Expr;`
   * `print Expr;`
 
-* Parenthesized expressions (integers only):
+* Parenthesized expressions:
   * `(Expr)`
+  * `(Strl)`
 
 * Binary expressions (between two integers):
   * `Expr OP Expr`, where `OP` can be `+`, `-`, `*`, `/`, `%`, `==`, `!=`, `<`, `>`, `<=`, `>=`, `&&`, or `||`
@@ -47,6 +50,21 @@ The interpreter is straightforward. It begins at the top of the parse tree and t
 * Line and block comments:
   * `// line comment`
   * `/* block comment */`
+
+## Version
+ v1.0:
+- Added the print() function.
+- Created the example/ directory for testing.
+- Applied the MakeFile.
+- Fixed bugs in the print() function and added support for printing strings only, integers only, and both.
+- Added a variable to store a string.
+- Created a new function called 'input' that inserts and updates variable values.
+
+v1.1:
+- Updated the input() function and applied it to integers only.
+- Added the varstore type to the enum: 'VAR_INT, VAR_STR, VAR_FLT'.
+- Expanded support to include floating-point numbers, whereas previously only integers were supported.
+- Added the stringToFloat() function in run.c to convert strings to floats and return a float value.
 
 ## Sample Output
 
