@@ -14,6 +14,7 @@ enum {
 
 #define IS_ALPHA(c)  (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #define IS_DIGIT(c)  ((c) >= '0' && (c) <= '9')
+#define IS_FLOAT(c)  (IS_DIGIT(c) || (c) == '.')
 #define IS_ALNUM(c)  (IS_ALPHA(c) || IS_DIGIT(c))
 #define IS_WSPACE(c) ((c) == ' ' || (c) == '\t' || (c) == '\r' || (c) == '\n')
 
@@ -62,7 +63,7 @@ static uint8_t tk_name(const uint8_t c, uint8_t *const s)
 static uint8_t tk_nmbr(const uint8_t c, uint8_t *const s)
 {
     (void) s;
-    return IS_DIGIT(c) ? STS_ACCEPT : STS_REJECT;
+    return IS_DIGIT(c) || IS_FLOAT(c) ? STS_ACCEPT : STS_REJECT;
 }
 
 static uint8_t tk_strl(const uint8_t c, uint8_t *const s)
