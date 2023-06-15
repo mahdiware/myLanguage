@@ -93,26 +93,26 @@ static const struct rule {
     
     r1(Expr, n(Atom))        // Expression can be an atom
     r1(Expr, n(Pexp))        // Expression can be a parenthesized expression
-    r1(Expr, n(Bexp))        // Expression can be a binary expression
+    r1(Expr, n(Bexp))        // Expression can be a Boolean expression
     r1(Expr, n(Uexp))        // Expression can be a unary expression
     r1(Expr, n(Texp))        // Expression can be a ternary expression
     r1(Expr, n(Aexp))        // Expression can be an array expression
     
     r3(Pexp, t(LPAR), n(Expr), t(RPAR))        // Parenthesized expression: (expression)
     
-    r3(Bexp, n(Expr), t(EQUL), n(Expr))        // Binary expression: expression == expression
-    r3(Bexp, n(Expr), t(NEQL), n(Expr))        // Binary expression: expression != expression
-    r3(Bexp, n(Expr), t(LTHN), n(Expr))        // Binary expression: expression < expression
-    r3(Bexp, n(Expr), t(GTHN), n(Expr))        // Binary expression: expression > expression
-    r3(Bexp, n(Expr), t(LTEQ), n(Expr))        // Binary expression: expression <= expression
-    r3(Bexp, n(Expr), t(GTEQ), n(Expr))        // Binary expression: expression >= expression
-    r3(Bexp, n(Expr), t(CONJ), n(Expr))        // Binary expression: expression && expression
-    r3(Bexp, n(Expr), t(DISJ), n(Expr))        // Binary expression: expression || expression
-    r3(Bexp, n(Expr), t(PLUS), n(Expr))        // Binary expression: expression + expression
-    r3(Bexp, n(Expr), t(MINS), n(Expr))        // Binary expression: expression - expression
-    r3(Bexp, n(Expr), t(MULT), n(Expr))        // Binary expression: expression * expression
-    r3(Bexp, n(Expr), t(DIVI), n(Expr))        // Binary expression: expression / expression
-    r3(Bexp, n(Expr), t(MODU), n(Expr))        // Binary expression: expression % expression
+    r3(Bexp, n(Expr), t(EQUL), n(Expr))        // Boolean expression: expression == expression
+    r3(Bexp, n(Expr), t(NEQL), n(Expr))        // Boolean expression: expression != expression
+    r3(Bexp, n(Expr), t(LTHN), n(Expr))        // Boolean expression: expression < expression
+    r3(Bexp, n(Expr), t(GTHN), n(Expr))        // Boolean expression: expression > expression
+    r3(Bexp, n(Expr), t(LTEQ), n(Expr))        // Boolean expression: expression <= expression
+    r3(Bexp, n(Expr), t(GTEQ), n(Expr))        // Boolean expression: expression >= expression
+    r3(Bexp, n(Expr), t(CONJ), n(Expr))        // Boolean expression: expression && expression
+    r3(Bexp, n(Expr), t(DISJ), n(Expr))        // Boolean expression: expression || expression
+    r3(Bexp, n(Expr), t(PLUS), n(Expr))        // Boolean expression: expression + expression
+    r3(Bexp, n(Expr), t(MINS), n(Expr))        // Boolean expression: expression - expression
+    r3(Bexp, n(Expr), t(MULT), n(Expr))        // Boolean expression: expression * expression
+    r3(Bexp, n(Expr), t(DIVI), n(Expr))        // Boolean expression: expression / expression
+    r3(Bexp, n(Expr), t(MODU), n(Expr))        // Boolean expression: expression % expression
     
     r2(Uexp, t(PLUS), n(Expr))        // Unary expression: +expression
     r2(Uexp, t(MINS), n(Expr))        // Unary expression: -expression
@@ -163,7 +163,7 @@ static void print_stack(void)
         "Atom",     // Non-terminal represents an atomic expression.
         "Expr",     // Non-terminal represents an expression.
         "Pexp",     // Non-terminal represents a primary expression.
-        "Bexp",     // Non-terminal represents a binary expression.
+        "Bexp",     // Non-terminal represents a Boolean expression.
         "Uexp",     // Non-terminal represents a unary expression.
         "Texp",     // Non-terminal represents a ternary expression.
         "Aexp",     // Non-terminal represents an arithmetic expression.
@@ -190,11 +190,13 @@ static void print_stack(void)
 
 static void destroy_node(const struct node *const node)
 {
+    // Recursively destroy the children nodes
     if (node->nchildren) {
         for (size_t child_idx = 0; child_idx < node->nchildren; ++child_idx) {
             destroy_node(node->children[child_idx]);
         }
 
+        // Free memory allocated for children nodes
         free(node->children[0]);
         free(node->children);
     }
@@ -202,6 +204,7 @@ static void destroy_node(const struct node *const node)
 
 static void deallocate_stack(void)
 {
+    // Free memory allocated for the stack nodes
     free(stack.nodes);
     stack.nodes = NULL;
     stack.size = 0;
@@ -210,10 +213,12 @@ static void deallocate_stack(void)
 
 static void destroy_stack(void)
 {
+    // Destroy all nodes in the stack
     for (size_t node_idx = 0; node_idx < stack.size; ++node_idx) {
         destroy_node(&stack.nodes[node_idx]);
     }
 
+    // Deallocate the stack memory
     deallocate_stack();
 }
 
@@ -223,8 +228,10 @@ static inline int term_eq_node(const struct term *const term, const struct node 
 
     if (term->is_tk == node_is_leaf) {
         if (node_is_leaf) {
+            // Check if the terminal token matches the node's token
             return term->tk == node->token->tk;
         } else {
+            // Check if the non-terminal token matches the node's non-terminal
             return term->nt == node->nt;
         }
     }
@@ -240,14 +247,18 @@ static size_t match_rule(const struct rule *const rule, size_t *const at)
 
     do {
         if (term_eq_node(term, &stack.nodes[st_idx])) {
+            // Match the terms in reverse order
             prev = term->is_mt ? term : NULL;
             --term, --st_idx;
         } else if (prev && term_eq_node(prev, &stack.nodes[st_idx])) {
+            // Match the previous term again
             --st_idx;
         } else if (term->is_mt) {
+            // Match an empty term
             prev = NULL;
             --term;
         } else {
+            // Failed to match the terms
             term = NULL;
             break;
         }
@@ -263,6 +274,7 @@ static size_t match_rule(const struct rule *const rule, size_t *const at)
 static inline int shift(const struct token *const token)
 {
     if (stack.size >= stack.allocated) {
+        // Expand the stack if it's full
         stack.allocated = (stack.allocated ?: 1) * 8;
 
         struct node *const tmp = realloc(stack.nodes,
@@ -275,6 +287,7 @@ static inline int shift(const struct token *const token)
         stack.nodes = tmp;
     }
 
+    // Shift the token onto the stack
     stack.nodes[stack.size++] = (struct node) {
         .nchildren = 0,
         .token = token,
@@ -286,10 +299,12 @@ static inline int shift(const struct token *const token)
 static inline bool should_shift_pre(const struct rule *const rule, const struct token *const tokens, size_t *const token_idx)
 {
     if (rule->lhs == NT_Unit) {
+        // No need to shift for NT_Unit
         return false;
     }
 
     while (SKIP_TOKEN(tokens[*token_idx].tk)) {
+        // Skip tokens that need to be ignored
         ++*token_idx;
     }
 
