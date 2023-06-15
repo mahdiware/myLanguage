@@ -1,2 +1,4 @@
-name = "mahdiware";
-print "my name is " name;
+var = 120;
+print "Enter Variable int: ";
+input var;
+print "var is " var;
