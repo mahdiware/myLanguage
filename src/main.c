@@ -95,8 +95,14 @@ int running(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	if (argc != 2) {
-        return fprintf(stderr, "Usage: %s <file>\n", argv[0]), EXIT_FAILURE;
+	if (argc == 2) {
+		running(argc, argv);
+    }else{
+		return fprintf(stderr, "Usage: %s <file>\n", argv[0]), EXIT_FAILURE;
+		/*
+    	char input[VAR_CAPACITY];
+    	fgets(input, VAR_CAPACITY, stdin);
+    	printf("%s", input);*/
     }
-	running(argc, argv);
+	return 0;
 }
