@@ -48,12 +48,13 @@ enum {
     TK_DIVI,   // Token for the division operator '/'
     TK_MODU,   // Token for the modulo operator '%'
     TK_NEGA,   // Token for the logical negation operator '!'
+    TK_FUNC,	// Token for the 'function' keyword
     TK_PRNT,   // Token for the 'print' keyword
     TK_INPT,   // Token for the 'input' keyword
     TK_SCOL,   // Token for the semicolon ';'
     TK_QUES,   // Token for the question mark '?'
     TK_COLN,   // Token for the colon ':'
-    // Tk_COMA, // Token for the comma ','
+    TK_COMA,   // Token for the comma ','
     TK_COUNT,  // Total number of tokens
     TK_FBEG,   // Token for the beginning of a file
     TK_FEND,   // Token for the end of a file
