@@ -1,4 +1,6 @@
-var = 120;
-print "Enter Variable int: ";
-input var;
-print "var is " var;
+name = "null";
+print "Enter your name: ";
+input name;
+
+print "";
+print "You name is: " name;
