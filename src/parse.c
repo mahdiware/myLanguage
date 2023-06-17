@@ -23,21 +23,23 @@
 // t(NAME) will expand to { .tk = TK_NAME, .is_tk = 1, .is_mt = 0 } which represents a terminal symbol
 // no will expand to { .tk = TK_COUNT, .is_tk = 1, .is_mt = 0 } which represents a placeholder symbol
 
+#define r(_lhs, ...) \
+	{ .lhs = NT_##_lhs, .rhs = { __VA_ARGS__, } }, // Production rule with variable number of terminal symbols 
 
 #define r1(_lhs, t1) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, no, no, t1, } }, // Production rule with 1 terminal symbol
+    r(_lhs, no, no, no, no, no, no, no, t1) // Production rule with 1 terminal symbol
 #define r2(_lhs, t1, t2) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, no, t1, t2, } }, // Production rule with 2 terminal symbols
+    r(_lhs, no, no, no, no, no, no, t1, t2) // Production rule with 2 terminal symbols
 #define r3(_lhs, t1, t2, t3) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, no, t1, t2, t3, } }, // Production rule with 3 terminal symbols
+    r(_lhs, no, no, no, no, no, t1, t2, t3) // Production rule with 3 terminal symbols
 #define r4(_lhs, t1, t2, t3, t4) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, no, t1, t2, t3, t4, } }, // Production rule with 4 terminal symbols
+    r(_lhs, no, no, no, no, t1, t2, t3, t4) // Production rule with 4 terminal symbols
 #define r5(_lhs, t1, t2, t3, t4, t5) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, no, t1, t2, t3, t4, t5, } }, // Production rule with 5 terminal symbols
+    r(_lhs,no, no, no, t1, t2, t3, t4, t5) // Production rule with 5 terminal symbols
 #define r6(_lhs, t1, t2, t3, t4, t5, t6) \
-    { .lhs = NT_##_lhs, .rhs = { no, no, t1, t2, t3, t4, t5, t6, } }, // Production rule with 6 terminal symbols
+    r(_lhs,no, no, t1, t2, t3, t4, t5, t6) // Production rule with 6 terminal symbols
 #define r7(_lhs, t1, t2, t3, t4, t5, t6, t7) \
-    { .lhs = NT_##_lhs, .rhs = { no, t1, t2, t3, t4, t5, t6, t7, } }, // Production rule with 7 terminal symbols
+    r(_lhs, no, t1, t2, t3, t4, t5, t6, t7) // Production rule with 7 terminal symbols
 
 static const struct rule {
     /* left-hand side of production */
@@ -62,7 +64,7 @@ static const struct rule {
 
     r1(Stmt, n(Assn))        // Statement can be an assignment
     r1(Stmt, n(Prnt))        // Statement can be a print statement
-/**/r1(Stmt, n(Inpt))        // Statement can be an input statement
+	r1(Stmt, n(Inpt))        // Statement can be an input statement
     r1(Stmt, n(Ctrl))        // Statement can be a control-flow statement
 	
 	r4(Assn, t(NAME), t(ASSN), t(STRL), t(SCOL))        // Assignment: variable = "string";
@@ -74,19 +76,24 @@ static const struct rule {
     r3(Prnt, t(PRNT), t(STRL), t(SCOL))        // Print statement: print "string";
     r3(Prnt, t(PRNT), n(Expr), t(SCOL))        // Print statement: print expression;
     r4(Prnt, t(PRNT), t(STRL), n(Expr), t(SCOL))        // Print statement: print "string" expression;
-/**/r3(Inpt, t(INPT), n(Expr), t(SCOL))        // Input statement: input(expression);
+    r5(Prnt, t(PRNT), t(STRL), t(COMA), n(Expr), t(SCOL))
+	r3(Inpt, t(INPT), n(Expr), t(SCOL))        // Input statement: input(expression);
 	
     r2(Ctrl, n(Cond), m(Elif))        // Control-flow statement: if (condition) { statements } elif (condition) { statements }
     r3(Ctrl, n(Cond), m(Elif), n(Else))        // Control-flow statement: if (condition) { statements } elif (condition) { statements } else { statements }
     r1(Ctrl, n(Dowh))        // Control-flow statement: do { statements } while (condition);
     r1(Ctrl, n(Whil))        // Control-flow statement: while (condition) { statements }
     
+    //r7(Func, t(FUNC), t(NAME), t(LPAR), t(RPAR), t(LBRC), m(Stmt), t(RBRC))
+	
     r5(Cond, t(COND), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // Conditional statement: if (condition) { statements }
     r5(Elif, t(ELIF), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // Elif statement: elif (condition) { statements }
     r4(Else, t(ELSE), t(LBRC), m(Stmt), t(RBRC))        // Else statement: else { statements }
     
     r7(Dowh, t(DOWH), t(LBRC), m(Stmt), t(RBRC), t(WHIL), n(Expr), t(SCOL))        // Do-while loop: do { statements } while (condition);
     r5(Whil, t(WHIL), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // While loop: while (condition) { statements }
+    
+    //r1(Iden, t(NAME))
     
     r1(Atom, t(NAME))        // Atom can be a variable name
     r1(Atom, t(NMBR))        // Atom can be a number
@@ -174,7 +181,8 @@ static void print_stack(void)
         const struct node *const node = &stack.nodes[i];
 
         if (node->nchildren) {
-            printf(YELLOW("%s "), nts[node->nt]);
+        	printf(YELLOW("%s "), nts[node->nt]);
+            //printf(YELLOW("%d "), node->nt);
         } else if (node->token->tk == TK_FBEG) {
             printf(GREEN("^ "));
         } else if (node->token->tk == TK_FEND) {
