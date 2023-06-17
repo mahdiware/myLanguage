@@ -61,11 +61,11 @@ The interpreter is straightforward. It begins at the top of the parse tree and t
 - Created a new function called 'input' that inserts and updates variable values.
 
 v1.1:
-- Updated the input() function and applied it to integers only.
+- Updated the input() function and applied it to integers and string only.
 - Added the varstore type to the enum: 'VAR_INT, VAR_STR, VAR_FLT'.
 - Expanded support to include floating-point numbers, whereas previously only integers were supported.
 - Added the stringToFloat() function in run.c to convert strings to floats and return a float value.
-
+- 
 ## Sample Output
 
 To start the interpreter, specify the file that contains the code.
