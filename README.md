@@ -50,7 +50,8 @@ The interpreter is straightforward. It begins at the top of the parse tree and t
 * Line and block comments:
   * `// line comment`
   * `/* block comment */`
-
+## Donate
+ [![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/mahdiware)
 ## Version
  v1.0:
 - Added the print() function.
@@ -65,7 +66,6 @@ v1.1:
 - Added the varstore type to the enum: 'VAR_INT, VAR_STR, VAR_FLT'.
 - Expanded support to include floating-point numbers, whereas previously only integers were supported.
 - Added the stringToFloat() function in run.c to convert strings to floats and return a float value.
-- 
 ## Sample Output
 
 To start the interpreter, specify the file that contains the code.
