@@ -28,6 +28,7 @@ enum {
     TK_RBRA,   // Token for a right bracket ']'
     TK_LBRC,   // Token for a left brace '{'
     TK_RBRC,   // Token for a right brace '}'
+    TK_FUNC,	// Token for the 'function' keyword
     TK_COND,   // Token for the 'if' keyword
     TK_ELIF,   // Token for the 'elif' keyword
     TK_ELSE,   // Token for the 'else' keyword
@@ -48,7 +49,6 @@ enum {
     TK_DIVI,   // Token for the division operator '/'
     TK_MODU,   // Token for the modulo operator '%'
     TK_NEGA,   // Token for the logical negation operator '!'
-    TK_FUNC,	// Token for the 'function' keyword
     TK_PRNT,   // Token for the 'print' keyword
     TK_INPT,   // Token for the 'input' keyword
     TK_SCOL,   // Token for the semicolon ';'
