@@ -11,6 +11,29 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+
+#if defined(LANG_READLINE)	/* { */
+
+#include <readline/readline.h>
+#include <readline/history.h>
+#define lang_initreadline(L)	((void)L, rl_readline_name="lang")
+#define lang_readline(L,b,p)	((void)L, ((b)=readline(p)) != NULL)
+#define lang_saveline(L,line)	((void)L, add_history(line))
+#define lang_freeline(L,b)	((void)L, free(b))
+
+#else				/* }{ */
+
+#define lang_initreadline(L)  ((void)L)
+#define lang_readline(L,b,p) \
+        ((void)L, fputs(p, stdout), fflush(stdout),  /* show prompt */ \
+        fgets(b, LANG_MAXINPUT, stdin) != NULL)  /* get line */
+#define lang_saveline(L,line)	{ (void)L; (void)line; }
+#define lang_freeline(L,b)	{ (void)L; (void)b; }
+
+#endif				/* } */
+
+
+
 static void print_tokens(const struct token *const tokens, const size_t ntokens, const int error) 
 {
     for (size_t i = 0, alternate = 0; i < ntokens; ++i) {
@@ -30,6 +53,8 @@ static void print_tokens(const struct token *const tokens, const size_t ntokens,
             printf(RED("%.*s") CYAN("< Unknown token\n"), len ?: 1, token.beg);
         } else if (token.tk == TK_LCOM || token.tk == TK_BCOM) {
             printf(GRAY("%.*s"), len, token.beg);
+        } else if(token.tk == TK_NAME){
+        	printf(CYAN("%.*s"), len, token.beg);
         } else if (alternate % 2) {
             printf(GREEN("%.*s"), len, token.beg);
         } else {
@@ -97,12 +122,12 @@ int main(int argc, char **argv)
 {
 	if (argc == 2) {
 		running(argc, argv);
+        //return fprintf(stderr, "Usage: %s <file>\n", argv[0]), EXIT_FAILURE;
     }else{
-		return fprintf(stderr, "Usage: %s <file>\n", argv[0]), EXIT_FAILURE;
-		/*
     	char input[VAR_CAPACITY];
     	fgets(input, VAR_CAPACITY, stdin);
-    	printf("%s", input);*/
+    	printf("%s", input);
     }
+    
 	return 0;
 }
