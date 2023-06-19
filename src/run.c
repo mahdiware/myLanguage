@@ -1,4 +1,5 @@
 #include "lex.h"
+#include "Utils.h"
 #include "run.h"
 #include "parse.h"
 #include <stdio.h>
@@ -7,9 +8,9 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-char* replace(const char*, const char*, const char*);
 static void run_stmt(const struct node *const);     // Function to execute a statement node
 static void run_assn(const struct node *const);     // Function to execute an assignment node
+static void run_func(const struct node *const);
 static void run_prnt(const struct node *const);     // Function to execute a print node
 static void run_inpt(const struct node *const);     // Function to execute a inpt node
 static void run_ctrl(const struct node *const);     // Function to execute a control node
@@ -41,38 +42,6 @@ static struct {
     } vars[VAR_CAPACITY];                // Array to store the variables
 } varstore;
 
-float stringToFloat(const char* str) {
-    float result = 0.0f;
-    float fraction = 0.0f;
-    int numDigits = 0;
-    int fractionDigits = 0;
-    
-    // Convert the integer part
-    while (*str >= '0' && *str <= '9') {
-        result = result * 10 + (*str - '0');
-        str++;
-        numDigits++;
-    }
-    // Convert the fraction part
-    if (*str == '.') {
-        str++; // Skip the decimal point
-        while (*str >= '0' && *str <= '9') {
-            fraction = fraction * 10 + (*str - '0');
-            str++;
-            fractionDigits++;
-        }
-    }
-    // Calculate the divisor to convert fraction to float
-    float divisor = 1.0f;
-    for (int i = 0; i < fractionDigits; i++) {
-        divisor *= 10.0f;
-    }
-    // Combine the integer and fraction parts
-    result += fraction / divisor;
-    
-    return result;
-}
-
 void run(const struct node *const unit)
 {
     // Execute each statement in the program
@@ -86,11 +55,6 @@ void run(const struct node *const unit)
     // Reset the size of the variable store
     varstore.size = 0;
 }
-
-#define prnt(size, ...) \
-	char strprnt[size]; \
-	sprintf(strprnt, __VA_ARGS__); \
-	puts(strprnt); \
 
 static void run_stmt(const struct node *const stmt)
 {
@@ -118,10 +82,9 @@ static void run_assn(const struct node *const assn)
     // Check if the left-hand side of the assignment is an array expression
     const int lhs_is_aexp = assn->children[0]->nchildren;
 	
-    // Evaluate the array index if present, or set it to 0
-    const int array_idx = lhs_is_aexp ?
-        eval_expr(assn->children[0]->children[2]) : 0;
-
+	// Evaluate the array index if present, or set it to 0
+    const int array_idx = lhs_is_aexp ? eval_expr(assn->children[0]->children[2]) : 0;
+	
     // Get the beginning position and length of the variable name or array name
     const uint8_t *const beg = lhs_is_aexp ?
         assn->children[0]->children[0]->token->beg :
@@ -130,7 +93,7 @@ static void run_assn(const struct node *const assn)
     const ptrdiff_t len = lhs_is_aexp ?
         assn->children[0]->children[0]->token->end - beg :
         assn->children[0]->token->end - beg;
-
+	
     size_t var_idx;
 	
     // Search for the variable in the variable store
@@ -237,14 +200,14 @@ static void run_assn(const struct node *const assn)
         }
 		
         varstore.vars[var_idx].array_size = array_idx + 1;
-
+		
 		if(assn->children[2]->token->tk == TK_STRL){
 			// Evaluate the expression on the right-hand side and assign the value
         	varstore.vars[var_idx].strbeg = strbeg;
         	varstore.vars[var_idx].strlen = strlen;
         	varstore.vars[var_idx].type = VAR_STR;
         	varstore.vars[var_idx].values[array_idx] = 0;
-			//prnt(6, "{%.*s}", strlen, strbeg);
+			
 		}else{
 			varstore.vars[var_idx].strlen = 0;
 			varstore.vars[var_idx].type = VAR_INT;
@@ -258,13 +221,18 @@ static void run_assn(const struct node *const assn)
     }
 }
 
+static void run_func(const struct node *const func)
+{
+	
+}
+
 static void run_prnt(const struct node *const prnt)
 {
     
 	// If there are 3 children, it means it's a print statement without an expression
+	
     if (prnt->nchildren == 3) {
-    	
-        if (prnt->children[1]->token->tk == TK_STRL) {
+    	if (prnt->children[1]->token->tk == TK_STRL) {
             const struct node *const strl = prnt->children[1];
             
         	// Extract the string from the token
@@ -272,16 +240,26 @@ static void run_prnt(const struct node *const prnt)
         	const uint8_t *const end = strl->token->end - 1;
         	const ptrdiff_t len = end - beg;
         	
+        	char *strprint = (char *)malloc((len+1) * sizeof(char));
+	        sprintf(strprint, "%.*s", len, beg);
         	// Print the string
-            printf("%.*s\n", (int) len, beg);
+            printf("%s", replace(strprint, "\\n", "\n"));
+            //printf("%.*s", len, beg);
         } else {
-        	if(prnt->children[1]->children[0]->token->tk==TK_NAME){
+        	
+        	if(prnt->children[1]->children[0]->children[0]->token->tk==TK_NAME){
         		const uint8_t *const bbeg = prnt->children[1]->children[0]->children[0]->token->beg;
         		const ptrdiff_t blen = prnt->children[1]->children[0]->children[0]->token->end - bbeg;
 	        	for (size_t idx = 0; idx < varstore.size; ++idx) {
 			        if (varstore.vars[idx].len == blen && !memcmp(varstore.vars[idx].beg, bbeg, blen)) {
 			            if (varstore.vars[idx].array_size && varstore.vars[idx].strbeg != NULL) {
-			                printf("%.*s\n", varstore.vars[idx].strlen, varstore.vars[idx].strbeg);
+			                //printf("%.*s\n", varstore.vars[idx].strlen, varstore.vars[idx].strbeg);
+			                
+			                char *strprint = (char *)malloc((varstore.vars[idx].strlen+1) * sizeof(char));
+					        sprintf(strprint, "%.*s", varstore.vars[idx].strlen, varstore.vars[idx].strbeg);
+				        	// Print the string
+				            printf("%s", replace(strprint, "\\n", "\n"));
+			                
 			                return;
 			            }
 			        }
@@ -299,21 +277,33 @@ static void run_prnt(const struct node *const prnt)
         const uint8_t *const end = strl->token->end - 1;
         const ptrdiff_t len = end - beg;
 		
-		if(prnt->children[2]->children[0]->token->tk==TK_NAME){
+		if(prnt->children[2]->children[0]->children[0]->token->tk==TK_NAME){
         	const uint8_t *const bbeg = prnt->children[2]->children[0]->children[0]->token->beg;
         	const ptrdiff_t blen = prnt->children[2]->children[0]->children[0]->token->end - bbeg;
 	        for (size_t idx = 0; idx < varstore.size; ++idx) {
 			    if (varstore.vars[idx].len == blen && !memcmp(varstore.vars[idx].beg, bbeg, blen)) {
 			        if (varstore.vars[idx].array_size && varstore.vars[idx].type == VAR_STR) {
-			            printf("%.*s%.*s\n", (int) len, beg, varstore.vars[idx].strlen, varstore.vars[idx].strbeg);
+			            //printf("%.*s%.*s\n", (int) len, beg, varstore.vars[idx].strlen, varstore.vars[idx].strbeg);
+			            
+			            char *str_primary = (char *)malloc((len+1) * sizeof(char));
+					    sprintf(str_primary, "%.*s", (int) len, beg);
+				        
+				        char *str_secondary = (char *)malloc((varstore.vars[idx].strlen+1) * sizeof(char));
+					    sprintf(str_secondary, "%.*s", varstore.vars[idx].strlen, varstore.vars[idx].strbeg);
+					    // Print the string
+				        printf("%s%s", str_primary, replace(str_secondary, "\\n", "\n"));
+			                
+			            
 			            return;
 			        }
 			    }
 			}
         }
-        
+        char *strprint = (char *)malloc((len+1) * sizeof(char));
+		sprintf(strprint, "%.*s", (int) len, beg);
+		
         // Evaluate the expression and print the string with the evaluated result
-        printf("%.*s%d\n", (int) len, beg, eval_expr(prnt->children[2]));
+        printf("%s%d\n", replace(strprint, "\\n", "\n"), eval_expr(prnt->children[2]));
     }
 }
 
@@ -343,7 +333,7 @@ static void run_inpt(const struct node *const inpt)
 			        
 			        return;
 			    }else{
-			    	//prnt(50, "{%d}", varstore.vars[idx].values[0]);
+			    	
 			    	scanf("%d", &varstore.vars[idx].values[0]);
 			    	return;
 			    }
@@ -380,39 +370,12 @@ static void run_inpt(const struct node *const inpt)
 }
 
 
-char* replace(const char* str, const char* find, const char* replace) {
-    char* result;
-    int i, count = 0;
-    size_t find_len = strlen(find);
-    size_t replace_len = strlen(replace);
-    // Count the number of occurrences of 'find' in 'str'
-    for (i = 0; str[i] != '\0'; i++) {
-        if (strstr(&str[i], find) == &str[i]) {
-            count++;
-            i += find_len - 1;
-        }
-    }
-    // Allocate memory for the result string
-    result = (char*)malloc(i + count * (replace_len - find_len) + 1);
-    i = 0;
-    // Replace occurrences of 'find' with 'replace'
-    while (*str) {
-        if (strstr(str, find) == str) {
-            strcpy(&result[i], replace);
-            i += replace_len;
-            str += find_len;
-        } else {
-            result[i++] = *str++;
-        }
-    }
-    result[i] = '\0';
-    return result;
-}
-
-
 static void run_ctrl(const struct node *const ctrl)
 {
     switch (ctrl->children[0]->nt) {
+    case NT_Func: {
+    	run_func(ctrl->children[0]);
+    } break;
     case NT_Cond: {
         // Conditional statement
         const struct node *const cond = ctrl->children[0];
@@ -494,71 +457,81 @@ static void run_ctrl(const struct node *const ctrl)
 static int eval_atom(const struct node *const atom)
 {
 	switch (atom->children[0]->token->tk) {
-    case TK_NAME: {
-        // Variable name
-        const uint8_t *const beg = atom->children[0]->token->beg;
-        const ptrdiff_t len = atom->children[0]->token->end - beg;
-		
-        // Search for the variable in the varstore
-        for (size_t idx = 0; idx < varstore.size; ++idx) {
-            if (varstore.vars[idx].len == len && !memcmp(varstore.vars[idx].beg, beg, len)) {
-                // Check if the variable is an array
-                if (varstore.vars[idx].array_size) {
-                	return varstore.vars[idx].values[0];
-                } else {
-                    return 0;
-                }
-            }
-        }
+		case TK_NAME: {
+	        // Variable name
+	        const uint8_t *const beg = atom->children[0]->token->beg;
+	        const ptrdiff_t len = atom->children[0]->token->end - beg;
+	        		
+	        // Search for the variable in the varstore
+	        for (size_t idx = 0; idx < varstore.size; ++idx) {
+	            if (varstore.vars[idx].len == len && !memcmp(varstore.vars[idx].beg, beg, len)) {
+	                // Check if the variable is an array
+	                if (varstore.vars[idx].array_size) {
+	                	return varstore.vars[idx].values[0];
+	                } else {
+	                    return 0;
+	                }
+	            }
+	        }
+	
+	        return fprintf(stderr, "warn: access to undefined variable\n"), 0;
+	    }
+	    case TK_NMBR: {
+	        // Numeric value
+	        const uint8_t *const beg = atom->children[0]->token->beg;
+	        const uint8_t *const end = atom->children[0]->token->end;
+	        
+	        //int result = 0, mult = 1;
+	        
+	        /*char *strfloat = (char *)malloc((end - beg + 1) * sizeof(char));
+	        sprintf(strfloat, "%.*s", end-beg, beg);
+			prnt(50, "%f", stringToFloat(strfloat));*/
+	        // Convert the numeric value from string to integer
+	        /*for (ssize_t idx = end - beg - 1; idx >= 0; --idx, mult *= 10) {
+	            result += mult * (beg[idx] - '0');
+	        }*/
+	        char *StrNum = (char *)malloc((end - beg + 1) * sizeof(char));
+	        sprintf(StrNum, "%.*s", end-beg, beg);
+	        
+	        //return StrNum;
+			if(contains(StrNum, ".")){
+				return 0;
+			}else{
+				return stringToInt(StrNum);
+			}
+			
+	        //return result;
+	    }
 
-        return fprintf(stderr, "warn: access to undefined variable\n"), 0;
-    }
-
-    case TK_NMBR: {
-        // Numeric value
-        const uint8_t *const beg = atom->children[0]->token->beg;
-        const uint8_t *const end = atom->children[0]->token->end;
-        int result = 0, mult = 1;
-        
-        /*char *strfloat = (char *)malloc((end - beg + 1) * sizeof(char));
-        sprintf(strfloat, "%.*s", end-beg, beg);
-		prnt(50, "%f", stringToFloat(strfloat));*/
-        // Convert the numeric value from string to integer
-        for (ssize_t idx = end - beg - 1; idx >= 0; --idx, mult *= 10) {
-            result += mult * (beg[idx] - '0');
-        }
-
-        return result;
-    }
-
-    default:
-        abort();
-    }
+	    default: {
+	        abort();
+	    }
+	}
 }
 
 static int eval_expr(const struct node *const expr)
 {
-    switch (expr->children[0]->nt) {
-    case NT_Atom:
-        return eval_atom(expr->children[0]);
-
-    case NT_Pexp:
-        return eval_pexp(expr->children[0]);
-
-    case NT_Bexp:
-        return eval_bexp(expr->children[0]);
-
-    case NT_Uexp:
-        return eval_uexp(expr->children[0]);
-
-    case NT_Texp:
-        return eval_texp(expr->children[0]);
-
-    case NT_Aexp:
-        return eval_aexp(expr->children[0]);
-
-    default:
-        abort();
+	switch (expr->children[0]->nt) {
+	    case NT_Atom:
+	        return eval_atom(expr->children[0]);
+	
+	    case NT_Pexp:
+	        return eval_pexp(expr->children[0]);
+	
+	    case NT_Bexp:
+	        return eval_bexp(expr->children[0]);
+	
+	    case NT_Uexp:
+	        return eval_uexp(expr->children[0]);
+	
+	    case NT_Texp:
+	        return eval_texp(expr->children[0]);
+	
+	    case NT_Aexp:
+	        return eval_aexp(expr->children[0]);
+	
+	    default:
+	        abort();
     }
 }
 
@@ -661,8 +634,7 @@ static int eval_uexp(const struct node *const uexp)
 static int eval_texp(const struct node *const texp)
 {
     // Evaluate ternary expressions
-    return eval_expr(texp->children[0]) ?
-        eval_expr(texp->children[2]) : eval_expr(texp->children[4]);
+    return eval_expr(texp->children[0]) ? eval_expr(texp->children[2]) : eval_expr(texp->children[4]);
 }
 
 static int eval_aexp(const struct node *const aexp)
