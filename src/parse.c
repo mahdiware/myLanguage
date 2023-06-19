@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define RULE_RHS_LAST 7
+#define RULE_RHS_LAST 10
 #define GRAMMAR_SIZE (sizeof(grammar) / sizeof(*grammar))
 #define SKIP_TOKEN(t) ((t) == TK_WSPC || (t) == TK_LCOM || (t) == TK_BCOM)
 
@@ -27,19 +27,25 @@
 	{ .lhs = NT_##_lhs, .rhs = { __VA_ARGS__, } }, // Production rule with variable number of terminal symbols 
 
 #define r1(_lhs, t1) \
-    r(_lhs, no, no, no, no, no, no, no, t1) // Production rule with 1 terminal symbol
+    r(_lhs, no, no, no, no, no, no, no, no, no, no, t1) // Production rule with 1 terminal symbol
 #define r2(_lhs, t1, t2) \
-    r(_lhs, no, no, no, no, no, no, t1, t2) // Production rule with 2 terminal symbols
+    r(_lhs, no, no, no, no, no, no, no, no, no, t1, t2) // Production rule with 2 terminal symbols
 #define r3(_lhs, t1, t2, t3) \
-    r(_lhs, no, no, no, no, no, t1, t2, t3) // Production rule with 3 terminal symbols
+    r(_lhs, no, no, no, no, no, no, no, no, t1, t2, t3) // Production rule with 3 terminal symbols
 #define r4(_lhs, t1, t2, t3, t4) \
-    r(_lhs, no, no, no, no, t1, t2, t3, t4) // Production rule with 4 terminal symbols
+    r(_lhs, no, no, no, no, no, no, no, t1, t2, t3, t4) // Production rule with 4 terminal symbols
 #define r5(_lhs, t1, t2, t3, t4, t5) \
-    r(_lhs,no, no, no, t1, t2, t3, t4, t5) // Production rule with 5 terminal symbols
+    r(_lhs, no, no, no, no, no, no, t1, t2, t3, t4, t5) // Production rule with 5 terminal symbols
 #define r6(_lhs, t1, t2, t3, t4, t5, t6) \
-    r(_lhs,no, no, t1, t2, t3, t4, t5, t6) // Production rule with 6 terminal symbols
+    r(_lhs, no, no, no, no, no, t1, t2, t3, t4, t5, t6) // Production rule with 6 terminal symbols
 #define r7(_lhs, t1, t2, t3, t4, t5, t6, t7) \
-    r(_lhs, no, t1, t2, t3, t4, t5, t6, t7) // Production rule with 7 terminal symbols
+    r(_lhs, no, no, no, no, t1, t2, t3, t4, t5, t6, t7) // Production rule with 7 terminal symbols
+#define r8(_lhs, t1, t2, t3, t4, t5, t6, t7, t8) \
+    r(_lhs, no, no, no, t1, t2, t3, t4, t5, t6, t7, t8) // Production rule with 7 terminal symbols
+#define r9(_lhs, t1, t2, t3, t4, t5, t6, t7, t8, t9) \
+    r(_lhs, no, no, t1, t2, t3, t4, t5, t6, t7, t8, t9) // Production rule with 7 terminal symbols
+#define r10(_lhs, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10)) \
+    r(_lhs, no, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) // Production rule with 7 terminal symbols
 
 static const struct rule {
     /* left-hand side of production */
@@ -67,6 +73,8 @@ static const struct rule {
 	r1(Stmt, n(Inpt))        // Statement can be an input statement
     r1(Stmt, n(Ctrl))        // Statement can be a control-flow statement
 	
+	//r1(Iden, t(NAME))
+	
 	r4(Assn, t(NAME), t(ASSN), t(STRL), t(SCOL))        // Assignment: variable = "string";
     r4(Assn, n(Aexp), t(ASSN), t(STRL), t(SCOL))        // Assignment: array[index] = "string";
     
@@ -82,9 +90,11 @@ static const struct rule {
     r2(Ctrl, n(Cond), m(Elif))        // Control-flow statement: if (condition) { statements } elif (condition) { statements }
     r3(Ctrl, n(Cond), m(Elif), n(Else))        // Control-flow statement: if (condition) { statements } elif (condition) { statements } else { statements }
     r1(Ctrl, n(Dowh))        // Control-flow statement: do { statements } while (condition);
+    r1(Ctrl, n(Func))
     r1(Ctrl, n(Whil))        // Control-flow statement: while (condition) { statements }
     
-    //r7(Func, t(FUNC), t(NAME), t(LPAR), t(RPAR), t(LBRC), m(Stmt), t(RBRC))
+    r7(Func, t(FUNC), t(NAME), t(LPAR), t(RPAR), t(LBRC), m(Stmt), t(RBRC))
+	r4(Func, t(NAME), t(LPAR), t(RPAR), t(SCOL))
 	
     r5(Cond, t(COND), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // Conditional statement: if (condition) { statements }
     r5(Elif, t(ELIF), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // Elif statement: elif (condition) { statements }
@@ -93,12 +103,11 @@ static const struct rule {
     r7(Dowh, t(DOWH), t(LBRC), m(Stmt), t(RBRC), t(WHIL), n(Expr), t(SCOL))        // Do-while loop: do { statements } while (condition);
     r5(Whil, t(WHIL), n(Expr), t(LBRC), m(Stmt), t(RBRC))        // While loop: while (condition) { statements }
     
-    //r1(Iden, t(NAME))
     
     r1(Atom, t(NAME))        // Atom can be a variable name
     r1(Atom, t(NMBR))        // Atom can be a number
     
-    r1(Expr, n(Atom))        // Expression can be an atom
+    r1(Expr, n(Atom))        // Expression can be an Atom
     r1(Expr, n(Pexp))        // Expression can be a parenthesized expression
     r1(Expr, n(Bexp))        // Expression can be a Boolean expression
     r1(Expr, n(Uexp))        // Expression can be a unary expression
@@ -138,15 +147,14 @@ static const struct rule {
 #undef r5
 #undef r6
 #undef r7
+#undef r8
+#undef r9
+#undef r10
 
 #undef n
 #undef m
 #undef t
 #undef no
-
-static const uint8_t precedence[TK_MODU - TK_EQUL + 1] = {
-    4, 4, 3, 3, 3, 3, 5, 6, 2, 2, 1, 1, 1,
-};
 
 static struct {
     size_t size, allocated;
@@ -158,18 +166,20 @@ static void print_stack(void)
     static const char *const nts[NT_COUNT] = {
         "Unit",     // Non-terminal represents the start symbol of the grammar - the entire program.
         "Stmt",     // Non-terminal represents a statement.
+        "Iden",
         "Assn",     // Non-terminal represents an assignment statement.
         "Prnt",     // Non-terminal represents a print statement.
         "Inpt",     // Non-terminal represents an input statement.
         "Ctrl",     // Non-terminal represents a control statement.
+        "Func",
         "Cond",     // Non-terminal represents a conditional statement.
         "Elif",     // Non-terminal represents an "elif" branch of a conditional statement.
         "Else",     // Non-terminal represents an "else" branch of a conditional statement.
         "Dowh",     // Non-terminal represents a "do-while" loop statement.
         "Whil",     // Non-terminal represents a "while" loop statement.
-        "Atom",     // Non-terminal represents an atomic expression.
+        "Atom",     // Non-terminal represents an Atomic expression.
         "Expr",     // Non-terminal represents an expression.
-        "Pexp",     // Non-terminal represents a primary expression.
+        "Pexp",     // Non-terminal represents a Parenthesize expression.
         "Bexp",     // Non-terminal represents a Boolean expression.
         "Uexp",     // Non-terminal represents a unary expression.
         "Texp",     // Non-terminal represents a ternary expression.
@@ -317,12 +327,15 @@ static inline bool should_shift_pre(const struct rule *const rule, const struct 
     }
 
     const struct token *const ahead = &tokens[*token_idx];
-
+	const struct token *const aback = &tokens[*token_idx-3];
+	
     if (rule->lhs == NT_Bexp && ahead->tk >= TK_EQUL && ahead->tk <= TK_MODU) {
         /*
             Check whether the operator ahead has a lower precedence. If it has,
             let the parser shift it before applying the Bexp reduction.
         */
+        const uint8_t precedence[TK_MODU - TK_EQUL + 1] = {4, 4, 3, 3, 3, 3, 5, 6, 2, 2, 1, 1, 1,};
+		
         const uint8_t p1 = precedence[rule->rhs[RULE_RHS_LAST - 1].tk - TK_EQUL];
         const uint8_t p2 = precedence[ahead->tk - TK_EQUL];
 
@@ -334,9 +347,10 @@ static inline bool should_shift_pre(const struct rule *const rule, const struct 
             Do not allow the left side of an assignment or an array name to
             escalate to Expr.
         */
-        if (ahead->tk == TK_ASSN || ahead->tk == TK_LBRA) {
+        if (ahead->tk == TK_ASSN || ahead->tk == TK_LBRA || aback->tk == TK_FUNC || ahead->tk == TK_LPAR) {
             return true;
         }
+        //printf("sorry: %d", aback->tk);
     } else if (rule->lhs == NT_Expr && rule->rhs[RULE_RHS_LAST].nt == NT_Aexp) {
         /*
             Do not allow an Aexp on the left side of an assignment to escalate
@@ -375,6 +389,7 @@ static inline bool should_shift_post(const struct rule *const rule, const struct
 static int reduce(const struct rule *const rule, const size_t at, const size_t size)
 {
     struct node *const child_nodes = malloc(size * sizeof(struct node));
+	//struct node *const child_nodes = calloc(size, sizeof(struct node));
 
     if (!child_nodes) {
         return PARSE_NOMEM;
@@ -383,6 +398,7 @@ static int reduce(const struct rule *const rule, const size_t at, const size_t s
     struct node *const reduce_at = &stack.nodes[at];
     struct node **const old_children = reduce_at->children;
     reduce_at->children = malloc(size * sizeof(struct node *)) ?: old_children;
+	//reduce_at->children = calloc(size, sizeof(struct node *)) ?: old_children;
 
     if (reduce_at->children == old_children) {
         return free(child_nodes), PARSE_NOMEM;
