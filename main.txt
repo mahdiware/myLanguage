@@ -1,6 +1,13 @@
-name = "null";
+name = "mohamed";
 print "Enter your name: ";
 input name;
+/*
+can work only in parser but soon adding and run
+function whoami(){
+	print "Welcome: " name;
+	print "Welcome: " name;
+}
+whoami();
+*/
 
-print "";
-print "You name is: " name;
+print "Welcome " name;
