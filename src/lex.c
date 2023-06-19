@@ -168,6 +168,7 @@ TOKEN_DEFINE(tk_lbra, "[")
 TOKEN_DEFINE(tk_rbra, "]")
 TOKEN_DEFINE(tk_lbrc, "{")
 TOKEN_DEFINE(tk_rbrc, "}")
+TOKEN_DEFINE(tk_func, "function")
 TOKEN_DEFINE(tk_cond, "if")
 TOKEN_DEFINE(tk_elif, "elif")
 TOKEN_DEFINE(tk_else, "else")
@@ -188,7 +189,6 @@ TOKEN_DEFINE(tk_mult, "*")
 TOKEN_DEFINE(tk_divi, "/")
 TOKEN_DEFINE(tk_modu, "%")
 TOKEN_DEFINE(tk_nega, "!")
-TOKEN_DEFINE(tk_func, "function")
 TOKEN_DEFINE(tk_prnt, "print")
 TOKEN_DEFINE(tk_inpt, "input")
 TOKEN_DEFINE(tk_scol, ";")
@@ -209,6 +209,7 @@ static uint8_t (*const token_funcs[TK_COUNT])(const uint8_t, uint8_t *const) = {
     tk_rbra,    // Function to recognize right brackets
     tk_lbrc,    // Function to recognize left braces
     tk_rbrc,    // Function to recognize right braces
+    tk_func,	// Function to recognize function keyword
     tk_cond,    // Function to recognize conditional keyword "if"
     tk_elif,    // Function to recognize conditional keyword "elif"
     tk_else,    // Function to recognize conditional keyword "else"
@@ -229,7 +230,6 @@ static uint8_t (*const token_funcs[TK_COUNT])(const uint8_t, uint8_t *const) = {
     tk_divi,    // Function to recognize arithmetic operator "/"
     tk_modu,    // Function to recognize arithmetic operator "%"
     tk_nega,    // Function to recognize negation operator "!"
-    tk_func,	// Function to recognize function keyword
     tk_prnt,    // Function to recognize print statement keyword "print"
     tk_inpt,    // Function to recognize input statement keyword "input"
     tk_scol,    // Function to recognize semicolon ";"
