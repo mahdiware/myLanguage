@@ -1,4 +1,4 @@
-CFLAGS = -std=gnu11 -Wall -Werror
+CFLAGS = -std=gnu11 -DLANG_READLINE -Wall -Werror
 NAME = lang
 
 SRCDIR := ./src
@@ -15,8 +15,8 @@ $(OBJS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 $(NAME): $(OBJS)
 	$(CC) -o $(NAME) $^
 
-.PHONY: clean
-
+clear: c
+run: r
 c:
 	rm -rf $(OBJDIR)
 	rm -f $(NAME)
