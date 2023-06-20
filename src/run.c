@@ -42,6 +42,18 @@ static struct {
     } vars[VAR_CAPACITY];                // Array to store the variables
 } varstore;
 
+
+static struct {
+	size_t size;                                 // Current number of functions stored in the function
+
+	struct {
+		const uint8_t *beg;                       // Beginning memory address of the function name
+        ptrdiff_t len;
+        struct node *children;
+	} get[VAR_CAPACITY];										//
+
+} function;
+
 void run(const struct node *const unit)
 {
     // Execute each statement in the program
@@ -223,7 +235,38 @@ static void run_assn(const struct node *const assn)
 
 static void run_func(const struct node *const func)
 {
-	
+	if(func->children[0]->token->tk == TK_FUNC && func->children[1]->token->tk == TK_NAME){
+		const uint8_t *beg = func->children[1]->token->beg;
+		const ptrdiff_t len = func->children[1]->token->end - func->children[1]->token->beg;
+		
+		struct node *stmt = func->children[5];
+		
+		size_t fun_idx;
+		for (fun_idx = 0; fun_idx < function.size; ++fun_idx) {
+			
+		}
+		
+		if(fun_idx < VAR_CAPACITY){
+			function.get[fun_idx].beg = beg;
+			function.get[fun_idx].len = len;
+			function.get[fun_idx].children = stmt;			
+		}
+		
+		function.size++;
+	}else if(func->children[0]->token->tk == TK_NAME && func->children[1]->token->tk == TK_LPAR){
+		const uint8_t *beg = func->children[0]->token->beg;
+		const ptrdiff_t len = func->children[0]->token->end - func->children[0]->token->beg;
+				
+		for (size_t idx = 0; idx < function.size; ++idx) {
+	        if (function.get[idx].len == len && !memcmp(function.get[idx].beg, beg, len)) {
+	            // Check if the variable is an array
+	            while (function.get[idx].children->nchildren) {
+                	run_stmt(function.get[idx].children++);
+                }
+	            
+	        }
+	    }
+	}
 }
 
 static void run_prnt(const struct node *const prnt)
@@ -364,7 +407,7 @@ static void run_inpt(const struct node *const inpt)
 			}
 		}
 		
-		prnt(50, "sorry 😪; this token is error (%d)", inpt->children[1]->children[0]->token->tk);
+		prnt(40, "sorry 😪; this token is error (%d)", inpt->children[1]->children[0]->token->tk);
 		
 	}
 }
