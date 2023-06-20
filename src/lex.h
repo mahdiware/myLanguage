@@ -22,6 +22,9 @@ enum {
     TK_WSPC,   // Token for whitespace
     TK_LCOM,   // Token for a line comment
     TK_BCOM,   // Token for a block comment
+    TK_TRUE,	
+    TK_FALSE,	
+    TK_NULL,	
     TK_LPAR,   // Token for a left parenthesis '('
     TK_RPAR,   // Token for a right parenthesis ')'
     TK_LBRA,   // Token for a left bracket '['

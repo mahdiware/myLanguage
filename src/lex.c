@@ -161,7 +161,9 @@ static uint8_t tk_bcom(const uint8_t c, uint8_t *const s)
 
     abort();
 }
-
+TOKEN_DEFINE(tk_true, "true")
+TOKEN_DEFINE(tk_false, "false")
+TOKEN_DEFINE(tk_null, "null")
 TOKEN_DEFINE(tk_lpar, "(")
 TOKEN_DEFINE(tk_rpar, ")")
 TOKEN_DEFINE(tk_lbra, "[")
@@ -203,6 +205,9 @@ static uint8_t (*const token_funcs[TK_COUNT])(const uint8_t, uint8_t *const) = {
     tk_wspc,    // Function to recognize whitespace
     tk_lcom,    // Function to recognize line comments
     tk_bcom,    // Function to recognize block comments
+    tk_true,	 // Function to recognize bool true
+    tk_false,	 // Function to recognize bool false
+    tk_null,	 // Function to recognize string null value
     tk_lpar,    // Function to recognize left parentheses
     tk_rpar,    // Function to recognize right parentheses
     tk_lbra,    // Function to recognize left brackets
