@@ -220,7 +220,20 @@ static void run_assn(const struct node *const assn)
         	varstore.vars[var_idx].type = VAR_STR;
         	varstore.vars[var_idx].values[array_idx] = 0;
 			
+		}else if(assn->children[2]->token->tk == TK_NULL){
+			// Evaluate the expression on the right-hand side and assign the value
+        	varstore.vars[var_idx].strbeg = (uint8_t *)"null";
+        	varstore.vars[var_idx].strlen = 4;
+        	varstore.vars[var_idx].type = VAR_STR;
+        	varstore.vars[var_idx].values[array_idx] = 0;
+		}else if(assn->children[2]->token->tk == TK_TRUE || assn->children[2]->token->tk == TK_FALSE){
+			varstore.vars[var_idx].strlen = 0;
+			varstore.vars[var_idx].type = VAR_INT;
+			varstore.vars[var_idx].strbeg = NULL;
+        	// Evaluate the expression on the right-hand side and assign the value
+        	varstore.vars[var_idx].values[array_idx] = assn->children[2]->token->tk == TK_TRUE ? 1 : 0;
 		}else{
+			
 			varstore.vars[var_idx].strlen = 0;
 			varstore.vars[var_idx].type = VAR_INT;
 			varstore.vars[var_idx].strbeg = NULL;
