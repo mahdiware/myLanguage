@@ -1,13 +1,5 @@
-name = "mohamed";
-print "Enter your name: ";
-input name;
-/*
-can work only in parser but soon adding and run
 function whoami(){
-	print "Welcome: " name;
-	print "Welcome: " name;
+	str = "Hello World!\n";
+	print "output: " str;
 }
 whoami();
-*/
-
-print "Welcome " name;
