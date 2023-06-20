@@ -77,7 +77,9 @@ static const struct rule {
 	
 	r4(Assn, t(NAME), t(ASSN), t(STRL), t(SCOL))        // Assignment: variable = "string";
     r4(Assn, n(Aexp), t(ASSN), t(STRL), t(SCOL))        // Assignment: array[index] = "string";
-    
+    r4(Assn, t(NAME), t(ASSN), t(TRUE), t(SCOL))        // Assignment: variable = "string";
+    r4(Assn, t(NAME), t(ASSN), t(FALSE), t(SCOL))        // Assignment: array[index] = "string";
+    r4(Assn, t(NAME), t(ASSN), t(NULL), t(SCOL))        // Assignment: array[index] = "string";
     r4(Assn, t(NAME), t(ASSN), n(Expr), t(SCOL))        // Assignment: variable = expression;
     r4(Assn, n(Aexp), t(ASSN), n(Expr), t(SCOL))        // Assignment: array[index] = expression;
     
