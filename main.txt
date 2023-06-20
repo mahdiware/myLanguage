@@ -1,5 +1,4 @@
-function whoami(){
-	str = "Hello World!\n";
-	print "output: " str;
+bool = true;
+if (bool == 1){
+	print "bool true\n";
 }
-whoami();
