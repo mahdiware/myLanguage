@@ -1,5 +1,3 @@
-<p align="center"> <img src="https://raw.githubusercontent.com/mahdiware/myLanguage/master/img/icon.jpg" alt="Interpreter-Language" title=Logo" align="center"> </p>
-
 ## About
 
 This is a customizable and expandable lexical analyzer, parser, and interpreter for a simplistic, imperative language with similarities to C. It also serves as an educational resource for comprehending lexical analysis and parsing.
