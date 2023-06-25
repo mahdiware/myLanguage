@@ -6,10 +6,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-//if development is 1 then it is defined and displayed to the lexer and interpreter when running the code.
-#ifndef development
-	#define development 0
-#endif
 //capacity of variable & char length
 #ifndef VAR_CAPACITY
 	#define VAR_CAPACITY 1024
@@ -18,7 +14,7 @@
 enum {
     NT_Unit,   // Non-terminal symbol for the entire program or unit
     NT_Stmt,   // Non-terminal symbol for a statement
-    NT_Iden, 	//
+    NT_Pram, 	// Non-terminal symbol for a parameter function (e.g., function name(..,..) or name(.., ..);)
     NT_Assn,   // Non-terminal symbol for an assignment statement
     NT_Prnt,   // Non-terminal symbol for a print statement
     NT_Inpt,   // Non-terminal symbol for an input statement
