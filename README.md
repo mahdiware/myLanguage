@@ -112,3 +112,6 @@ $ ./lang examples/do-while.txt
 🔘> 9
 2️⃣> 10
 ```
+
+## License
+Mw is available under the permissive MIT license.
