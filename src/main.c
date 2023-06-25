@@ -11,28 +11,18 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#if defined(LANG_READLINE)
+  #include <readline/readline.h>
+  #include <readline/history.h>
+  #include <readline/tilde.h>
+#endif
 
-#if defined(LANG_READLINE)	/* { */
-
-#include <readline/readline.h>
-#include <readline/history.h>
-#define lang_initreadline(L)	((void)L, rl_readline_name="lang")
-#define lang_readline(L,b,p)	((void)L, ((b)=readline(p)) != NULL)
-#define lang_saveline(L,line)	((void)L, add_history(line))
-#define lang_freeline(L,b)	((void)L, free(b))
-
-#else				/* }{ */
-
-#define lang_initreadline(L)  ((void)L)
-#define lang_readline(L,b,p) \
-        ((void)L, fputs(p, stdout), fflush(stdout),  /* show prompt */ \
-        fgets(b, LANG_MAXINPUT, stdin) != NULL)  /* get line */
-#define lang_saveline(L,line)	{ (void)L; (void)line; }
-#define lang_freeline(L,b)	{ (void)L; (void)b; }
-
-#endif				/* } */
-
-
+//if showMe is 1 then it is defined and displayed to the lexer and interpreter when running the code.
+#if defined(SHOW_ME)
+	#define showMe 1
+#else
+	#define showMe 0
+#endif
 
 static void print_tokens(const struct token *const tokens, const size_t ntokens, const int error) 
 {
@@ -88,12 +78,13 @@ int running(int argc, char **argv)
     if (mapped == MAP_FAILED) {
         return perror("mmap"), close(fd), exit_status;
     }
-
+	
     struct token *tokens;
     size_t ntokens;
+    
+    
     const int lex_error = lex(mapped, size, &tokens, &ntokens);
-
-    if ((!lex_error || lex_error == LEX_UNKNOWN_TOKEN) && development == 1) {
+	if ((!lex_error || lex_error == LEX_UNKNOWN_TOKEN) && showMe) {
     	puts(WHITE("*** Lexing ***"));
         print_tokens(tokens, ntokens, lex_error);
     } else if (lex_error == LEX_NOMEM) {
@@ -101,11 +92,13 @@ int running(int argc, char **argv)
     }
 
     if (!lex_error) {
-    	if(development == 1) puts(WHITE("\n*** Parsing ***"));
+    	if(showMe) 
+    		puts(WHITE("\n*** Parsing ***"));
         const struct node root = parse(tokens, ntokens);
 
         if (!parse_error(root)) {
-        	if(development == 1) puts(WHITE("\n*** Running ***"));
+        	if(showMe)
+        		puts(WHITE("\n*** Running ***"));
             run(&root);
             destroy_tree(root);
             exit_status = EXIT_SUCCESS;
@@ -122,12 +115,7 @@ int main(int argc, char **argv)
 {
 	if (argc == 2) {
 		running(argc, argv);
-        //return fprintf(stderr, "Usage: %s <file>\n", argv[0]), EXIT_FAILURE;
     }else{
-    	char input[VAR_CAPACITY];
-    	fgets(input, VAR_CAPACITY, stdin);
-    	printf("%s", input);
+    	return fprintf(stderr, "Usage: %s <file>\n", argv[0]), EXIT_FAILURE;
     }
-    
-	return 0;
 }
