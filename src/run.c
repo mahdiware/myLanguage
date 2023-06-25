@@ -26,6 +26,7 @@ enum {
 	VAR_INT,			//Variable type integer
 	VAR_STR,			//Variable type string
 	VAR_FLT,			//Variable type float
+	VAR_BOL,			//Variable type bool
 };
 
 static struct {
@@ -36,6 +37,7 @@ static struct {
         ptrdiff_t len;                            // Length of the variable name
         size_t array_size;                        // Size of the array, if the variable is an array
         int *values;                              // Pointer to the array of variable values
+        bool boolean;							// bool variable
         uint8_t type;							 // Type of VarStore
         const uint8_t *strbeg;                   // Beginning memory address of the variable Value
         ptrdiff_t strlen;                         // Length of the variable Value
@@ -169,6 +171,13 @@ static void run_assn(const struct node *const assn)
         			varstore.vars[var_idx].type = VAR_STR;
 					// Evaluate the expression on the right-hand side and assign the value
                 	varstore.vars[var_idx].values[array_idx] = 0;
+				}else if(assn->children[2]->token->tk == TK_TRUE || assn->children[2]->token->tk == TK_FALSE){
+					varstore.vars[var_idx].strlen = 0;
+					varstore.vars[var_idx].type = VAR_BOL;
+					varstore.vars[var_idx].strbeg = NULL;
+		        	// Evaluate the expression on the right-hand side and assign the value
+		        	varstore.vars[var_idx].values[array_idx] = assn->children[2]->token->tk == TK_TRUE ? 1 : 0;
+		        	varstore.vars[var_idx].boolean = assn->children[2]->token->tk == TK_TRUE ? true : false;
 				}else{
 					varstore.vars[var_idx].strbeg = NULL;
 					varstore.vars[var_idx].strlen = 0;
@@ -228,10 +237,11 @@ static void run_assn(const struct node *const assn)
         	varstore.vars[var_idx].values[array_idx] = 0;
 		}else if(assn->children[2]->token->tk == TK_TRUE || assn->children[2]->token->tk == TK_FALSE){
 			varstore.vars[var_idx].strlen = 0;
-			varstore.vars[var_idx].type = VAR_INT;
+			varstore.vars[var_idx].type = VAR_BOL;
 			varstore.vars[var_idx].strbeg = NULL;
         	// Evaluate the expression on the right-hand side and assign the value
         	varstore.vars[var_idx].values[array_idx] = assn->children[2]->token->tk == TK_TRUE ? 1 : 0;
+        	varstore.vars[var_idx].boolean = assn->children[2]->token->tk == TK_TRUE ? true : false;
 		}else{
 			
 			varstore.vars[var_idx].strlen = 0;
@@ -276,9 +286,10 @@ static void run_func(const struct node *const func)
 	            while (function.get[idx].children->nchildren) {
                 	run_stmt(function.get[idx].children++);
                 }
-	            
+	            return;
 	        }
 	    }
+	    fprintf(stderr, "FunctionError: name '%.*s' is not defined\n", len, beg);
 	}
 }
 
