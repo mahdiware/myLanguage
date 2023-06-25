@@ -1,4 +1,7 @@
-bool = true;
-if (bool == 1){
-	print "bool true\n";
+function name(){
+	std = true;
+	if(std == 1){
+		print "Hello World!\n";
+	}
 }
+name();
