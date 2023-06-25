@@ -5,6 +5,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+//if showMe is 1 then it is defined and displayed to the lexer and interpreter when running the code.
+#if defined(SHOW_ME)
+	#define showMe 1
+#else
+	#define showMe 0
+#endif
+
 #define RULE_RHS_LAST 10
 #define GRAMMAR_SIZE (sizeof(grammar) / sizeof(*grammar))
 #define SKIP_TOKEN(t) ((t) == TK_WSPC || (t) == TK_LCOM || (t) == TK_BCOM)
@@ -448,34 +455,31 @@ struct node parse(const struct token *const tokens, const size_t ntokens)
             ++token_idx;
             continue;
         }
-
+		
         SHIFT_OR_NOMEM(&tokens[token_idx++]);
-        if(development == 1){
-        	printf(CYAN("Shift: ")), print_stack();
-		}
+        if(showMe)
+        	printf(CYAN("SHIF: ")), print_stack();
 		
         try_reduce_again:;
         const struct rule *rule = grammar;
-
+		
         do {
             size_t reduction_at, reduction_size;
-
-            if ((reduction_size = match_rule(rule, &reduction_at))) {
+			if ((reduction_size = match_rule(rule, &reduction_at))) {
                 const bool do_shift = should_shift_pre(rule, tokens, &token_idx);
 
                 if (!do_shift) {
                     REDUCE_OR_NOMEM(rule, reduction_at, reduction_size);
-                    if(development == 1){
+                    if(showMe){
                     	const ptrdiff_t rule_number = rule - grammar + 1;
-                    	printf(ORANGE("Red%02td: "), rule_number), print_stack();
+                    	printf(ORANGE("RD") GREEN("%02td: "), rule_number), print_stack();
                     }
                 }
 
                 if (do_shift || should_shift_post(rule, tokens, &token_idx)) {
                     SHIFT_OR_NOMEM(&tokens[token_idx++]);
-                    if(development == 1){
-                    	printf(CYAN("Shift: ")), print_stack();
-                    }
+                    if(showMe)
+                    	printf(CYAN("SHIF: ")), print_stack();
                 }
 
                 goto try_reduce_again;
@@ -488,10 +492,8 @@ struct node parse(const struct token *const tokens, const size_t ntokens)
 
     const int accepted = stack.size == 1 &&
         stack.nodes[0].nchildren && stack.nodes[0].nt == NT_Unit;
-	
-	if(development == 1){
+	if(showMe)
     	printf(accepted ? GREEN("ACCEPT ") : RED("REJECT ")), print_stack();
-	}
 	
     if (accepted) {
         const struct node ret = stack.nodes[0];
