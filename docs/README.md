@@ -2,37 +2,22 @@
 <img src="assets/images/logo.png" height="90px" alt="Mw Programming Language" title="Mw Programming Language">
 </p>
 
-**Mw** is a powerful, dynamically typed, lightweight, embeddable programming language written in C without any external dependencies (except for stdlib).
+**Mw** is a powerful, dynamically typed, lightweight, embeddable programming language written in C without any external dependencies (except for stdlib). It is a class-based concurrent scripting language with a modern [Swift](https://github.com/apple/swift) like syntax.
 
-**Mw** is a customizable and expandable lexical analyzer, parser, and interpreter for a simplistic, imperative language with similarities to C. It also serves as an educational resource for comprehending lexical analysis and parsing.
+**Mw** supports procedural programming, object-oriented programming, functional programming and data-driven programming. Thanks to special built-in methods, it can also be used as a prototype-based programming language.
+
+**Mw** has been developed from scratch for the [Creo](https://creolabs.com) project in order to offer an easy way to write portable code for the iOS and Android platforms. It is written in portable C code that can be compiled on any platform using a C99 compiler. The VM code is about 4K lines long, the multipass compiler code is about 7K lines and the shared code is about 3K lines long. The compiler and virtual machine combined, add less than 200KB to the executable on a 64 bit system.
 
 > Comments in the C code make it easy to read and understand.
 
 ## What Mw code looks like
 
 ```lua
-number = 0;
-
 function example(){
-	do {
-	    if (number % 2 == 0 || number % 4 == 0) {
-	        print "2️⃣> " number;
-	    } elif (number % 5 == 0) {
-	        print "5️⃣> " number;
-	    } else {
-	        print "🔘> " number;
-	    }
-	    
-	    number = number + 1;
-	} while (number <= 10);
+	print("Hello ", "World!");
 }
 
 example();
-print "\n\n";
-number[1] = 10;
-
-print "number[1] is: " + number[1];
-print "This program is working\n";
  ```
 
 ## Features
@@ -49,8 +34,9 @@ print "This program is working\n";
 
 * Printing to standard output:
   * `print "Placeholder: ";`
-  * `print "Placeholder: " Expr;`
-  * `print Expr;`
+  * `print("Placeholder: ");`
+  * `print("Placeholder: ", Expr);`
+  * `print(Expr);`
 
 * Parenthesized expressions:
   * `(Expr)`
