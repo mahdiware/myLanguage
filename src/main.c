@@ -1,4 +1,5 @@
 #include "include/main.h"
+#include "include/builtin.h"
 #include "include/lexer.h"
 #include "include/parser.h"
 #include "include/visitor.h"
@@ -20,12 +21,6 @@
   #include <readline/tilde.h>
 #endif
 
-//if showMe is 1 then it is defined and displayed to the lexer and interpreter when running the code.
-#if defined(SHOW_ME)
-	#define showMe 1
-#else
-	#define showMe 0
-#endif
 static const char *input_file = NULL;
 
 
@@ -68,31 +63,31 @@ static void print_help (void) {
     printf("  lang example.mw\n");
     printf("\n");
     printf("Available options are:\n");
-    printf("  --version          show version information and exit\n");
-    printf("  --help             show command line usage and exit\n");
-    printf("  -ms                print millitime\n");
+    printf("  -v,  --version          show version information and exit\n");
+    printf("  -h,  --help             show command line usage and exit\n");
+    printf("  -ms                	  print millitime\n");
     
 }
 
 static void print_version (void) {
-	printf("Version: 1.1\n");
+	printf("%s\n", COPYRIGHT);
 }
 static action_type parse_args(int argc, char **argv) {
     if (argc == 1) return REPL;
 
-    if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+    if (argc == 2 && (!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version"))) {
         print_version();
         exit(0);
     }
 
-    if (argc == 2 && strcmp(argv[1], "--help") == 0) {
+    if (argc == 2 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))) {
         print_help();
         exit(0);
     }
 
     action_type type = NONE;
     for (int i=1; i<argc; ++i) {
-        if ((strcmp(argv[i], "-ms") == 0) && (i+1 < argc)) {
+        if ((!strcmp(argv[i], "-ms")) && (i+1 < argc)) {
         	input_file = argv[++i];
             type = MSEC;
         }else{
@@ -103,51 +98,40 @@ static action_type parse_args(int argc, char **argv) {
     return type;
 }
 
-
 int start(int argc, char **argv)
 {
-    int fd;
     size_t size;
-    struct stat statbuf;
     int exit_status = EXIT_FAILURE;
-
-    if ((fd = open(input_file, O_RDONLY)) < 0) {
-        return perror("open"), exit_status;
-    }
-
-    if (fstat(fd, &statbuf) < 0) {
-        return perror("fstat"), close(fd), exit_status;
-    }
-
-    if ((size = statbuf.st_size) == 0) {
-        fprintf(stderr, "‘%s‘: file is empty\n", input_file);
-        return close(fd), exit_status;
-    }
-
-    const uint8_t *const mapped = mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0);
-
-    if (mapped == MAP_FAILED) {
-        return perror("mmap"), close(fd), exit_status;
-    }
+	
+	const uint8_t *const source_code = file_reader(input_file, &size, &exit_status);
+	
+	if(exit_status == EXIT_FAILURE)
+		return EXIT_FAILURE;
 	
     struct token *tokens;
     size_t ntokens;
     
     
-    const int lex_error = lexer(mapped, size, &tokens, &ntokens);
-	if ((!lex_error || lex_error == LEX_UNKNOWN_TOKEN) && showMe) {
-    	puts(WHITE("*** Lexing ***"));
-        print_tokens(tokens, ntokens, lex_error);
+    const int lex_error = lexer(source_code, size, &tokens, &ntokens);
+	if ((!lex_error || lex_error == LEX_UNKNOWN_TOKEN)) {
+		#if defined(SHOW_ME)
+    		puts(WHITE("*** Lexing ***"));
+    		print_tokens(tokens, ntokens, lex_error);
+    	#endif
     } else if (lex_error == LEX_NOMEM) {
         puts(RED("The lexer could not allocate memory."));
     }
 
     if (!lex_error) {
-    	if(showMe) puts(WHITE("\n*** Parsing ***"));
+    	#if defined(SHOW_ME)
+    		puts(WHITE("\n*** Parsing ***"));
+    	#endif
         const struct node root = parser(tokens, ntokens);
 
         if (!parser_error(root)) {
-        	if(showMe) puts(WHITE("\n*** Running ***"));
+        	#if defined(SHOW_ME)
+        		puts(WHITE("\n*** Running ***"));
+        	#endif
             visitor(&root);
             destroy_tree(root);
             exit_status = EXIT_SUCCESS;
@@ -155,17 +139,19 @@ int start(int argc, char **argv)
     }
 
     free(tokens);
-    munmap((uint8_t *const) mapped, size);
-    close(fd);
+    munmap((uint8_t *const) source_code, size);
     return exit_status;
 }
 
 int main(int argc, char **argv)
 {
+	int exit_status = EXIT_FAILURE;
+	
 	action_type type = parse_args(argc, argv);
 	uint64_t tstart = nanotime();
+	
 	if (type == NONE || type == MSEC) {
-		start(argc, argv);
+		exit_status = start(argc, argv);
     }else if(type == REPL){
     	return fprintf(stderr, "Usage: %s <file>\n", argv[0]), EXIT_FAILURE;
     }
@@ -173,4 +159,6 @@ int main(int argc, char **argv)
     	uint64_t tend = nanotime();
     	printf("\nTime: %.4f ms\n", millitime(tstart, tend));
     }
+    
+    return exit_status;
 }

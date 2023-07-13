@@ -5,13 +5,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-//if showMe is 1 then it is defined and displayed to the lexer and interpreter when running the code.
-#if defined(SHOW_ME)
-	#define showMe 1
-#else
-	#define showMe 0
-#endif
-
 #define RULE_RHS_LAST 10
 #define GRAMMAR_SIZE (sizeof(grammar) / sizeof(*grammar))
 #define SKIP_TOKEN(t) ((t) == TK_WSPC || (t) == TK_LCOM || (t) == TK_BCOM)
@@ -478,8 +471,10 @@ struct node parser(const struct token *const tokens, const size_t ntokens)
         }
 		
         SHIFT_OR_NOMEM(&tokens[token_idx++]);
-        if(showMe)
+        
+        #if defined(SHOW_ME)
         	printf(CYAN("SHIF: ")), print_stack();
+		#endif
 		
         try_reduce_again:;
         const struct rule *rule = grammar;
@@ -491,16 +486,17 @@ struct node parser(const struct token *const tokens, const size_t ntokens)
 				
                 if (!do_shift) {
                     REDUCE_OR_NOMEM(rule, reduction_at, reduction_size);
-                    if(showMe){
+                    #if defined(SHOW_ME)
                     	const ptrdiff_t rule_number = rule - grammar + 1;
                     	printf(ORANGE("RD") GREEN("%02td: "), rule_number), print_stack();
-                    }
+                    #endif
                 }
 
                 if (do_shift || should_shift_post(rule, tokens, &token_idx)) {
                     SHIFT_OR_NOMEM(&tokens[token_idx++]);
-                    if(showMe)
+                    #if defined(SHOW_ME)
                     	printf(CYAN("SHIF: ")), print_stack();
+                    #endif
                 }
 
                 goto try_reduce_again;
@@ -512,7 +508,10 @@ struct node parser(const struct token *const tokens, const size_t ntokens)
     #undef REDUCE_OR_NOMEM
 
     const int accepted = stack.size == 1 && stack.nodes[0].nchildren && stack.nodes[0].nt == NT_Unit;
-	if(showMe) printf(accepted ? GREEN("ACCEPT ") : RED("REJECT ")), print_stack();
+    
+	#if defined(SHOW_ME)
+		printf(accepted ? GREEN("ACCEPT ") : RED("REJECT ")), print_stack();
+	#endif
 	
     if (accepted) {
         const struct node ret = stack.nodes[0];

@@ -1,10 +1,5 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
 #include "include/utils.h"
-
-
+#include <stdlib.h>
 #include <time.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -12,6 +7,12 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/stat.h>
+
+#include <stddef.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 
 #if defined(__linux)
 #include <sys/time.h>
@@ -84,10 +85,40 @@ double millitime (nanotime_t tstart, nanotime_t tend) {
 }
 
 
-#define prnt(size, ...) \
-	char strprnt[size]; \
-	sprintf(strprnt, __VA_ARGS__); \
-	puts(strprnt); \
+/***_OTHER_***/
+
+uint8_t *file_reader(const char *path, size_t *size, int *exit_status){
+	int fd;
+	struct stat statbuf;
+	
+	*exit_status = EXIT_FAILURE;
+	if ((fd = open(path, O_RDONLY)) < 0) {
+        perror("open"), *exit_status;
+        return NULL;
+    }
+    
+    if (fstat(fd, &statbuf) < 0) {
+        perror("fstat"), close(fd), *exit_status;
+        return NULL;
+    }
+    
+    if ((*size = statbuf.st_size) == 0) {
+        fprintf(stderr, "‘%s‘: file is empty\n", path);
+        close(fd), *exit_status;
+        return NULL;
+    }
+    
+    uint8_t *source_code = mmap(0, *size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    if (source_code == MAP_FAILED) {
+        perror("mmap"), close(fd), *exit_status;
+        return NULL;
+    }
+    *exit_status = EXIT_SUCCESS;
+    
+    close(fd);
+    return source_code;
+}
 
 
 char* replace(const char* str, const char* find, const char* replace) {

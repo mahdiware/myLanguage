@@ -3,60 +3,17 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
+#define VERSION_MAJOR					   "1"
+#define VERSION_MINOR					   "2"
+#define VERSION_RELEASE					   "0"
 
-enum {
-	Ttrue,		// Bool true
-	Tfalse,		// Bool false
-	Tnull,		// String null
-	Tcond,		// if-condition
-	Telif,		// elif-condition
-	Telse,		// else-condition
-	Tdowh,		// do-while-loop
-	Twhil,		// while-loop
-	Tfunc,		// function
-	Tretn,		// return
-	Tassn,		// =
-	Tnega,		// !
-	Tequl,		// ==
-	Tneql,		// !=
-	Tlthn,		// <
-	Tgthn,		// >
-	Tlteq,		// <=
-	Tgteq,		// >=
-	Tconj,		// &&
-	Tdisj,		// ||
-	Tplus,		// +
-	Tmins,		// -
-	Tmult,		// *
-	Tdivi,		// /
-	Tmodu,		// %
-	Tpequ,		// +=
-	Tmequ,		// -=
-	Tplpl,			// ++
-	Tmimi,		// --
-	Tques,		// ?	
-	Tscol,		// ;
-	Tlpar,		// (
-	Trpar,		// )
-	Tlbrc,		// {
-	Trbrc,		// }
-	Tlbra,		// [
-	Trbra,		// ]
-	Tcoln,		// :
-	Tdott,		// .
-	Tcoma		// ,
-};
+#define VERSION_NUM						   504
+#define VERSION_RELEASE_NUM			     (VERSION_NUM * 100 + 6)
 
+#define VERSION								"lang " VERSION_MAJOR "." VERSION_MINOR
+#define RELEASE								VERSION "." VERSION_RELEASE
+#define COPYRIGHT							RELEASE "  Copyright (C) 2022-2023 mahdiware.me"
+#define AUTHORS								"Mohamed Abdifatah (Mahdiware)"
 
-
-static const char *const tokens [] = {
-    "true", "false", "null", "if", "elif",
-    "else", "do", "while", "function",
-    "return", "=", "!", "==", "!=", "<",
-    ">", "<=", ">=", "&&", "||", "+", "-",
-    "*", "/", "%", "+=", "-=", "++", "--",
-    "?", ";", "(", ")", "{", "}", "[", "]", ":",
-    ".", ","
-};
 
 #endif

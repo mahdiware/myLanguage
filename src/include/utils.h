@@ -41,6 +41,7 @@ double millitime (nanotime_t, nanotime_t);
 	sprintf(strprnt, __VA_ARGS__); \
 	puts(strprnt); \
 
+uint8_t *file_reader(const char *, size_t *, int *);
 
 char* replace(const char*, const char*, const char*);
 
