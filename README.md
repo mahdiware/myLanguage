@@ -80,18 +80,12 @@ The interpreter then starts execution from the root of the tree (which is always
 
 
 for example these code: 
-```
+```lua
 number = 0;
 
 do {
-    if (number % 2 == 0 || number % 4 == 0) {
-        print "2️⃣> " number;
-    } elif (number % 5 == 0) {
-        print "1️⃣> " number;
-    } else {
-        print "🔘> " number;
-    }
-
+    print("Hello ", "World!\n");
+    
     number = number + 1;
 } while (number <= 10);
 ```
@@ -99,18 +93,18 @@ do {
 and excused the code
 ```bash
 $ make
-$ ./lang examples/do-while.txt
-2️⃣> 0
-🔘> 1
-2️⃣> 2
-🔘> 3
-2️⃣> 4
-1️⃣> 5
-2️⃣> 6
-🔘> 7
-2️⃣> 8
-🔘> 9
-2️⃣> 10
+$ ./lang filename.mw
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
 ```
 
 ## License
