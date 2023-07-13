@@ -1,7 +1,1 @@
-function name(){
-	std = true;
-	if(std == 1){
-		print "Hello World!\n";
-	}
-}
-name();
+print("Hello ", "World! ", 494, "\n");
