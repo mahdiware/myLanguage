@@ -80,7 +80,7 @@ The interpreter then starts execution from the root of the tree (which is always
 
 
 for example these code: 
-```lua
+```mahdiware
 number = 0;
 
 do {
